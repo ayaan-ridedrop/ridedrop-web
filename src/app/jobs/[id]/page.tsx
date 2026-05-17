@@ -4,7 +4,7 @@ import { redirect, notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
 import AcceptJobForm from './AcceptJobForm';
-import { RIDEDROP_COMMISSION } from '@/lib/types';
+import { RIDEDROP_COMMISSION, type MatchingJourney } from '@/lib/types';
 
 export default async function JobDetailPage({
   params,
@@ -35,7 +35,7 @@ export default async function JobDetailPage({
 
   // Find this carrier's listed journeys that match the job's route.
   const { data: matchingJourneys } = isCarrier && !isOwnJob
-    ? await supabase
+    ? (await supabase
         .from('journeys')
         .select('id, departure_at, train_operator, minimum_price_pence, slots_remaining')
         .eq('carrier_id', user.id)
@@ -43,8 +43,8 @@ export default async function JobDetailPage({
         .eq('from_station', job.from_station)
         .eq('to_station', job.to_station)
         .gt('slots_remaining', 0)
-        .order('departure_at', { ascending: true })
-    : { data: null };
+        .order('departure_at', { ascending: true }) as { data: MatchingJourney[] | null })
+    : { data: null as MatchingJourney[] | null };
 
   return (
     <AppShell user={{ email: user.email!, firstName: profile?.first_name }}>

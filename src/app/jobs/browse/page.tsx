@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
+import type { BrowseJob } from '@/lib/types';
 
 export default async function BrowseJobsPage({
   searchParams,
@@ -30,7 +31,7 @@ export default async function BrowseJobsPage({
   if (searchParams.from) q = q.eq('from_station', searchParams.from);
   if (searchParams.to) q = q.eq('to_station', searchParams.to);
 
-  const { data: jobs } = await q;
+  const { data: jobs } = await q as { data: BrowseJob[] | null };
 
   return (
     <AppShell user={{ email: user.email!, firstName: profile?.first_name }}>

@@ -214,6 +214,21 @@ export const UK_STATIONS = [
   "Aberdeen","Dundee","Perth","Stirling","Inverness","Fort William",
 ] as const;
 
+// ── Partial types for dashboard and list views ──
+export interface DashboardJob extends Pick<Job, 'id' | 'from_station' | 'to_station' | 'status' | 'max_budget_pence' | 'created_at'> {}
+
+export interface DashboardJourney extends Pick<Journey, 'id' | 'from_station' | 'to_station' | 'departure_at' | 'status'> {}
+
+export interface DashboardBooking extends Pick<Booking, 'id' | 'status' | 'agreed_price_pence' | 'job_id' | 'journey_id'> {}
+
+// Browse page partial types
+export interface BrowseJob extends Pick<Job, 'id' | 'from_station' | 'to_station' | 'package_description' | 'package_size' | 'max_budget_pence' | 'must_arrive_by' | 'created_at'> {}
+
+export interface BrowseJourney extends Pick<Journey, 'id' | 'from_station' | 'to_station' | 'departure_at' | 'arrival_at' | 'train_operator' | 'minimum_price_pence' | 'slots_remaining' | 'carrier_id'> {}
+
+// Job detail page matching journeys
+export interface MatchingJourney extends Pick<Journey, 'id' | 'departure_at' | 'train_operator' | 'minimum_price_pence' | 'slots_remaining'> {}
+
 // Commission as a fraction (20%). Single source of truth.
 export const RIDEDROP_COMMISSION = 0.2;
 

@@ -4,6 +4,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
+import type { BrowseJourney } from '@/lib/types';
 
 export default async function BrowseJourneysPage({
   searchParams,
@@ -31,7 +32,7 @@ export default async function BrowseJourneysPage({
   if (searchParams.from) q = q.eq('from_station', searchParams.from);
   if (searchParams.to) q = q.eq('to_station', searchParams.to);
 
-  const { data: journeys } = await q;
+  const { data: journeys } = await q as { data: BrowseJourney[] | null };
 
   return (
     <AppShell user={{ email: user.email!, firstName: profile?.first_name }}>

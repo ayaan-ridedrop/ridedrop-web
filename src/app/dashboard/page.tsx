@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
+import type { DashboardJob, DashboardJourney, DashboardBooking } from '@/lib/types';
 
 export default async function DashboardPage() {
   const supabase  = createClient() as any;
@@ -21,7 +22,11 @@ export default async function DashboardPage() {
 
   // Last 5 of everything that matters.
   const [{ data: recentJobs }, { data: recentJourneys }, { data: activeBookings }] =
-    await Promise.all([
+    await Promise.all<[
+      { data: DashboardJob[] | null },
+      { data: DashboardJourney[] | null },
+      { data: DashboardBooking[] | null }
+    ]>([
       supabase
         .from('jobs')
         .select('id, from_station, to_station, status, max_budget_pence, created_at')
