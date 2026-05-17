@@ -32,15 +32,15 @@ export async function resolveDispute(formData: FormData) {
   // Service-role to cross RLS on the booking.
   const admin = createServiceClient();
 
-  const { error: dErr } = await admin
-    .from('disputes')
+  const { error: dErr } = await (admin
+    .from('disputes') as any)
     .update({
       status: 'resolved',
       resolution_notes:
         `Resolution: ${parsed.data.resolution}` +
         (parsed.data.notes ? `\n${parsed.data.notes}` : ''),
       resolved_at: new Date().toISOString(),
-    } as any)
+    })
     .eq('id', parsed.data.disputeId);
   if (dErr) return { error: dErr.message };
 
@@ -49,15 +49,15 @@ export async function resolveDispute(formData: FormData) {
   // For split: cancel the booking and rely on manual Stripe refund.
   const newStatus =
     parsed.data.resolution === 'pay_carrier' ? 'completed' : 'cancelled';
-  const { error: bErr } = await admin
-    .from('bookings')
+  const { error: bErr } = await (admin
+    .from('bookings') as any)
     .update({
       status: newStatus,
       funds_released_at:
         parsed.data.resolution === 'pay_carrier'
           ? new Date().toISOString()
           : null,
-    } as any)
+    })
     .eq('id', parsed.data.bookingId);
   if (bErr) return { error: bErr.message };
 
