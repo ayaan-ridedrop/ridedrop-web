@@ -48,14 +48,18 @@ export default async function AdminPage() {
       `)
       .in('status', ['open', 'reviewing'])
       .order('created_at', { ascending: false })
-      .limit(20),
+      .limit(20)
+      .then(r => Promise.resolve(r)),
     admin
       .from('waitlist')
       .select('email, name, city, role_interest, created_at', { count: 'exact' })
       .order('created_at', { ascending: false })
-      .limit(20),
-    admin.from('profiles').select('*', { count: 'exact', head: true }),
-    admin.from('bookings').select('*', { count: 'exact', head: true }),
+      .limit(20)
+      .then(r => Promise.resolve(r)),
+    admin.from('profiles').select('*', { count: 'exact', head: true })
+      .then(r => Promise.resolve(r)),
+    admin.from('bookings').select('*', { count: 'exact', head: true })
+      .then(r => Promise.resolve(r)),
   ]);
 
   return (
