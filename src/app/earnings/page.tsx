@@ -49,7 +49,7 @@ export default async function EarningsPage() {
   const totalEarned = (cp?.total_earnings_pence ?? 0) / 100;
   const inEscrow =
     (pending ?? []).reduce(
-      (sum, b: any) => sum + (b.agreed_price_pence - b.commission_pence),
+      (sum: number, b: any) => sum + (b.agreed_price_pence - b.commission_pence),
       0,
     ) / 100;
 
@@ -61,7 +61,7 @@ export default async function EarningsPage() {
       return days < 28;
     })
     .reduce(
-      (sum, b: any) => sum + (b.agreed_price_pence - b.commission_pence),
+      (sum: number, b: any) => sum + (b.agreed_price_pence - b.commission_pence),
       0,
     ) / 100;
 
