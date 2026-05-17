@@ -40,7 +40,7 @@ export async function resolveDispute(formData: FormData) {
         `Resolution: ${parsed.data.resolution}` +
         (parsed.data.notes ? `\n${parsed.data.notes}` : ''),
       resolved_at: new Date().toISOString(),
-    })
+    } as any)
     .eq('id', parsed.data.disputeId);
   if (dErr) return { error: dErr.message };
 
@@ -57,7 +57,7 @@ export async function resolveDispute(formData: FormData) {
         parsed.data.resolution === 'pay_carrier'
           ? new Date().toISOString()
           : null,
-    })
+    } as any)
     .eq('id', parsed.data.bookingId);
   if (bErr) return { error: bErr.message };
 
