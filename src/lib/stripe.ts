@@ -20,6 +20,6 @@ export function getStripe(): Stripe {
       'STRIPE_SECRET_KEY is not set. Add it to .env.local — see docs/stripe-setup.md',
     );
   }
-  _stripe = new Stripe(secret, { apiVersion: '2024-06-20' });
+  _stripe = new Stripe(secret, { apiVersion: '2025-02-24.acacia' });
   return _stripe;
 }
