@@ -99,8 +99,8 @@ export async function acceptJob(formData: FormData) {
     const [{ data: senderAuth }, { data: senderProfile }, { data: carrierProfile }] =
       await Promise.all([
         admin.auth.admin.getUserById(job.sender_id),
-        admin.from('profiles').select('first_name').eq('id', job.sender_id).maybeSingle() as Promise<{ data: Pick<Profile, 'first_name'> | null }>,
-        admin.from('profiles').select('first_name').eq('id', user.id).maybeSingle() as Promise<{ data: Pick<Profile, 'first_name'> | null }>,
+        admin.from('profiles').select('first_name').eq('id', job.sender_id).maybeSingle().then(r => r) as Promise<{ data: Pick<Profile, 'first_name'> | null }>,
+        admin.from('profiles').select('first_name').eq('id', user.id).maybeSingle().then(r => r) as Promise<{ data: Pick<Profile, 'first_name'> | null }>,
       ]);
     if (senderAuth?.user?.email) {
       await emails.bookingAccepted({
