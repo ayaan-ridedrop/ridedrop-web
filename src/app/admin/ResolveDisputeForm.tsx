@@ -28,7 +28,7 @@ export default function ResolveDisputeForm({
     fd.append('notes', notes);
     const res = await resolveDispute(fd);
     setSubmitting(false);
-    if (res && 'error' in res) setError(res.error);
+    if (res && 'error' in res) setError(res.error ?? null);
   }
 
   return (
