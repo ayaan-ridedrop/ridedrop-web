@@ -57,9 +57,9 @@ export async function POST(req: Request) {
             ? session.payment_intent
             : session.payment_intent?.id;
         if (bookingId && paymentIntentId) {
-          await supabase
+          await (supabase as any)
             .from('bookings')
-            .update({ stripe_payment_intent_id: paymentIntentId as string } as any)
+            .update({ stripe_payment_intent_id: paymentIntentId })
             .eq('id', bookingId);
         }
         break;
@@ -69,9 +69,9 @@ export async function POST(req: Request) {
         const pi = event.data.object as any;
         const bookingId = pi.metadata?.booking_id;
         if (bookingId) {
-          await supabase
+          await (supabase as any)
             .from('bookings')
-            .update({ stripe_payment_intent_id: pi.id as string } as any)
+            .update({ stripe_payment_intent_id: pi.id })
             .eq('id', bookingId)
             .is('stripe_payment_intent_id', null);
         }
@@ -84,9 +84,9 @@ export async function POST(req: Request) {
             ? charge.payment_intent
             : charge.payment_intent?.id;
         if (paymentIntentId) {
-          await supabase
+          await (supabase as any)
             .from('bookings')
-            .update({ status: 'cancelled' } as any)
+            .update({ status: 'cancelled' })
             .eq('stripe_payment_intent_id', paymentIntentId);
         }
         break;
