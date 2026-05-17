@@ -59,7 +59,7 @@ export async function POST(req: Request) {
         if (bookingId && paymentIntentId) {
           await supabase
             .from('bookings')
-            .update({ stripe_payment_intent_id: paymentIntentId })
+            .update({ stripe_payment_intent_id: paymentIntentId as string })
             .eq('id', bookingId);
         }
         break;
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
         if (bookingId) {
           await supabase
             .from('bookings')
-            .update({ stripe_payment_intent_id: pi.id })
+            .update({ stripe_payment_intent_id: pi.id as string })
             .eq('id', bookingId)
             .is('stripe_payment_intent_id', null);
         }
