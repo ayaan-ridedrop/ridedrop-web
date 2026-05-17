@@ -38,7 +38,7 @@ export default function AcceptJobForm({
         const res = await acceptJob(fd);
         // On success, acceptJob redirects, so we never reach here.
         if (res && 'error' in res) {
-          setError(res.error);
+          setError(res.error ?? null);
           setSubmitting(false);
         }
       }}

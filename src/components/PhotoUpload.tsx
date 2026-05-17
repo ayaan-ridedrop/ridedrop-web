@@ -45,7 +45,7 @@ export default function PhotoUpload({
     const res = await uploadPackagePhoto(fd);
     setUploading(false);
     if (res && 'error' in res) {
-      setError(res.error);
+      setError(res.error ?? null);
       setPreview(existingUrl ?? null);
       return;
     }

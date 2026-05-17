@@ -21,7 +21,7 @@ export default function PayButton({
         const res = await createCheckoutSession(fd);
         // On success, createCheckoutSession redirects to Stripe.
         if (res && 'error' in res) {
-          setError(res.error);
+          setError(res.error ?? null);
           setSubmitting(false);
         }
       }}

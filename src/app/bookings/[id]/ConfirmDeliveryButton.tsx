@@ -20,7 +20,7 @@ export default function ConfirmDeliveryButton({
     fd.append('bookingId', bookingId);
     const res = await confirmDelivery(fd);
     setSubmitting(false);
-    if (res && 'error' in res) setError(res.error);
+    if (res && 'error' in res) setError(res.error ?? null);
   }
 
   return (

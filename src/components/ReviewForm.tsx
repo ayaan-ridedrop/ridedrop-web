@@ -34,7 +34,7 @@ export default function ReviewForm({
     if (body.trim()) fd.append('body', body.trim());
     const res = await leaveReview(fd);
     setSubmitting(false);
-    if (res && 'error' in res) setError(res.error);
+    if (res && 'error' in res) setError(res.error ?? null);
     else setDone(true);
   }
 

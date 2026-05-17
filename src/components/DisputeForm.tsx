@@ -52,7 +52,7 @@ export default function DisputeForm({ bookingId }: { bookingId: string }) {
     if (description.trim()) fd.append('description', description.trim());
     const res = await raiseDispute(fd);
     setSubmitting(false);
-    if (res && 'error' in res) setError(res.error);
+    if (res && 'error' in res) setError(res.error ?? null);
     else setDone(true);
   }
 

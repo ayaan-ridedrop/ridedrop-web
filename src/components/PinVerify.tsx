@@ -24,7 +24,7 @@ export default function PinVerify({
     fd.append('pin', pin);
     const res = await verifyPin(fd);
     setSubmitting(false);
-    if (res && 'error' in res) setError(res.error);
+    if (res && 'error' in res) setError(res.error ?? null);
     else setPin('');
   }
 
