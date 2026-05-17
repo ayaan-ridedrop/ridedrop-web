@@ -33,9 +33,9 @@ export default function ChatThread({
           table: 'messages',
           filter: `booking_id=eq.${bookingId}`,
         },
-        (payload) => {
+        (payload: { new: Message }) => {
           setMessages((prev) => {
-            const next = payload.new as Message;
+            const next = payload.new;
             if (prev.some((m) => m.id === next.id)) return prev;
             return [...prev, next];
           });
