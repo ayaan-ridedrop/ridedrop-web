@@ -7,7 +7,7 @@ import AppShell from '@/components/AppShell';
 import SendJobForm from './SendJobForm';
 
 export default async function SendPage() {
-  const supabase = createClient();
+  const supabase  = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 

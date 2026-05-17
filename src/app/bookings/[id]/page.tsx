@@ -17,7 +17,7 @@ export default async function BookingDetailPage({
 }: {
   params: { id: string };
 }) {
-  const supabase = createClient();
+  const supabase = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 

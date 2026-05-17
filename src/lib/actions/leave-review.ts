@@ -23,7 +23,7 @@ export async function leaveReview(formData: FormData) {
   });
   if (!parsed.success) return { error: 'Invalid input' };
 
-  const supabase = createClient();
+  const supabase  = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Not signed in' };
 

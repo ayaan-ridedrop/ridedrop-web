@@ -12,7 +12,7 @@ import ResolveDisputeForm from './ResolveDisputeForm';
 export const metadata = { title: 'Admin · RideDrop' };
 
 export default async function AdminPage() {
-  const supabase = createClient();
+  const supabase  = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 

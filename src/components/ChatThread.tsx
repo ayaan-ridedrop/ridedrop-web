@@ -22,7 +22,7 @@ export default function ChatThread({
 
   // Subscribe to new messages on this booking.
   useEffect(() => {
-    const supabase = createClient();
+    const supabase  = createClient() as any;
     const channel = supabase
       .channel(`messages:${bookingId}`)
       .on(
@@ -57,7 +57,7 @@ export default function ChatThread({
     const trimmed = body.trim();
     if (!trimmed) return;
     setSending(true);
-    const supabase = createClient();
+    const supabase  = createClient() as any;
     const { error } = await supabase.from('messages').insert({
       booking_id: bookingId,
       sender_id: currentUserId,

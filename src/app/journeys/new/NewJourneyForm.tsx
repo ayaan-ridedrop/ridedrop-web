@@ -38,7 +38,7 @@ export default function NewJourneyForm() {
 
     setSubmitting(true);
 
-    const supabase = createClient();
+    const supabase  = createClient() as any;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       setError('You are not signed in. Please sign in and try again.');

@@ -25,7 +25,7 @@ export async function resolveDispute(formData: FormData) {
   });
   if (!parsed.success) return { error: 'Invalid input' };
 
-  const supabase = createClient();
+  const supabase  = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || !isAdminEmail(user.email)) return { error: 'Forbidden' };
 

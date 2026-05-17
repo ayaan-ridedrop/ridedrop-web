@@ -18,7 +18,7 @@ export async function createCheckoutSession(formData: FormData) {
   const parsed = schema.safeParse({ bookingId: formData.get('bookingId') });
   if (!parsed.success) return { error: 'Invalid input' };
 
-  const supabase = createClient();
+  const supabase  = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Not signed in' };
 

@@ -34,7 +34,7 @@ export default function ProfileForm({
     setSaving(true);
     setError(null);
     const fd = new FormData(e.currentTarget);
-    const supabase = createClient();
+    const supabase  = createClient() as any;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       setError('Not signed in.');

@@ -33,7 +33,7 @@ export default function LoginForm({
       return;
     }
 
-    const supabase = createClient();
+    const supabase  = createClient() as any;
     const { error: err } = await supabase.auth.signInWithPassword({
       email,
       password,

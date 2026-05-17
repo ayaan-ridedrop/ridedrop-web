@@ -5,7 +5,7 @@ import AppShell from '@/components/AppShell';
 import ProfileForm from './ProfileForm';
 
 export default async function ProfilePage() {
-  const supabase = createClient();
+  const supabase  = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 

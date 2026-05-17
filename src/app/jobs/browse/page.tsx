@@ -9,7 +9,7 @@ export default async function BrowseJobsPage({
 }: {
   searchParams: { from?: string; to?: string };
 }) {
-  const supabase = createClient();
+  const supabase  = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 

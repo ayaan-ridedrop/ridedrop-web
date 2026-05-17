@@ -21,7 +21,7 @@ export async function verifyPin(formData: FormData) {
   });
   if (!parsed.success) return { error: parsed.error.errors[0]?.message ?? 'Invalid' };
 
-  const supabase = createClient();
+  const supabase  = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Not signed in' };
 

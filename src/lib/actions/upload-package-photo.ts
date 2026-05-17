@@ -23,7 +23,7 @@ export async function uploadPackagePhoto(formData: FormData) {
   if (!file || file.size === 0) return { error: 'Missing file' };
   if (file.size > 10 * 1024 * 1024) return { error: 'File too large (max 10 MB)' };
 
-  const supabase = createClient();
+  const supabase  = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Not signed in' };
 

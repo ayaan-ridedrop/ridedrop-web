@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
 
 export default async function DashboardPage() {
-  const supabase = createClient();
+  const supabase  = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 

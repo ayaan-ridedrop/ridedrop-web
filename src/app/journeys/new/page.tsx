@@ -5,7 +5,7 @@ import AppShell from '@/components/AppShell';
 import NewJourneyForm from './NewJourneyForm';
 
 export default async function NewJourneyPage() {
-  const supabase = createClient();
+  const supabase  = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
