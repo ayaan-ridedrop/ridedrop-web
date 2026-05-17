@@ -59,7 +59,7 @@ export async function POST(req: Request) {
         if (bookingId && paymentIntentId) {
           await supabase
             .from('bookings')
-            .update({ stripe_payment_intent_id: paymentIntentId as string })
+            .update({ stripe_payment_intent_id: paymentIntentId as string } as any)
             .eq('id', bookingId);
         }
         break;
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
         if (bookingId) {
           await supabase
             .from('bookings')
-            .update({ stripe_payment_intent_id: pi.id as string })
+            .update({ stripe_payment_intent_id: pi.id as string } as any)
             .eq('id', bookingId)
             .is('stripe_payment_intent_id', null);
         }
@@ -86,7 +86,7 @@ export async function POST(req: Request) {
         if (paymentIntentId) {
           await supabase
             .from('bookings')
-            .update({ status: 'cancelled' })
+            .update({ status: 'cancelled' } as any)
             .eq('stripe_payment_intent_id', paymentIntentId);
         }
         break;
