@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
-import { RIDEDROP_COMMISSION } from '@/lib/types';
+import { RIDEDROP_COMMISSION, type Profile } from '@/lib/types';
 import { emails } from '@/lib/email';
 
 const schema = z.object({
@@ -99,8 +99,8 @@ export async function acceptJob(formData: FormData) {
     const [{ data: senderAuth }, { data: senderProfile }, { data: carrierProfile }] =
       await Promise.all([
         admin.auth.admin.getUserById(job.sender_id),
-        admin.from('profiles').select('first_name').eq('id', job.sender_id).maybeSingle(),
-        admin.from('profiles').select('first_name').eq('id', user.id).maybeSingle(),
+        admin.from('profiles').select('first_name').eq('id', job.sender_id).maybeSingle() as Promise<{ data: Pick<Profile, 'first_name'> | null }>,
+        admin.from('profiles').select('first_name').eq('id', user.id).maybeSingle() as Promise<{ data: Pick<Profile, 'first_name'> | null }>,
       ]);
     if (senderAuth?.user?.email) {
       await emails.bookingAccepted({
