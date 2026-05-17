@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     }
 
     const supabase = createServiceClient();
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('waitlist')
       .upsert(
         {
