@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { getFriendlyErrorMessage } from '@/lib/error-messages';
 import Alert from '@/components/Alert';
@@ -76,7 +77,12 @@ export default function LoginForm({
       </div>
 
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-ink">Password</label>
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-medium text-ink">Password</label>
+          <Link href="/forgot-password" className="text-xs text-accent underline hover:text-accent-mid">
+            Forgot password?
+          </Link>
+        </div>
         <input
           name="password"
           type="password"
