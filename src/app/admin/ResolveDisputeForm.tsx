@@ -26,9 +26,15 @@ export default function ResolveDisputeForm({
     fd.append('bookingId', bookingId);
     fd.append('resolution', resolution);
     fd.append('notes', notes);
-    const res = await resolveDispute(fd);
-    setSubmitting(false);
-    if (res && 'error' in res) setError(res.error ?? null);
+
+    try {
+      await resolveDispute(fd);
+      setSubmitting(false);
+      window.location.reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to resolve dispute');
+      setSubmitting(false);
+    }
   }
 
   return (
