@@ -97,18 +97,9 @@ export default function LoginForm({
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-ink text-white rounded-full px-6 py-3.5 font-medium hover:bg-accent transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        className="w-full bg-ink text-white rounded-full px-6 py-3.5 font-medium hover:bg-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {loading ? (
-          <>
-            <span className="animate-spin">⏳</span>
-            Signing in…
-          </>
-        ) : (
-          <>
-            Sign in <span>→</span>
-          </>
-        )}
+        {loading ? 'Signing in...' : 'Sign in'}
       </button>
     </form>
   );

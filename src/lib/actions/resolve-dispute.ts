@@ -16,18 +16,18 @@ const schema = z.object({
   notes: z.string().max(1000).optional(),
 });
 
-export async function resolveDispute(formData: FormData) {
+export async function resolveDispute(formData: FormData): Promise<void> {
   const parsed = schema.safeParse({
     disputeId: formData.get('disputeId'),
     bookingId: formData.get('bookingId'),
     resolution: formData.get('resolution'),
     notes: formData.get('notes') ?? undefined,
   });
-  if (!parsed.success) return { error: 'Invalid input' };
+  if (!parsed.success) throw new Error('Invalid input');
 
   const supabase  = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user || !isAdminEmail(user.email)) return { error: 'Forbidden' };
+  if (!user || !isAdminEmail(user.email)) throw new Error('Forbidden');
 
   // Service-role to cross RLS on the booking.
   const admin = createServiceClient();
@@ -42,7 +42,7 @@ export async function resolveDispute(formData: FormData) {
       resolved_at: new Date().toISOString(),
     })
     .eq('id', parsed.data.disputeId);
-  if (dErr) return { error: dErr.message };
+  if (dErr) throw new Error(dErr.message);
 
   // For pay_carrier: complete the booking (carrier stats bump via trigger).
   // For refund_sender: cancel the booking.
@@ -59,11 +59,10 @@ export async function resolveDispute(formData: FormData) {
           : null,
     })
     .eq('id', parsed.data.bookingId);
-  if (bErr) return { error: bErr.message };
+  if (bErr) throw new Error(bErr.message);
 
   // TODO when Stripe is live: trigger the actual refund / transfer here.
 
   revalidatePath('/admin');
   revalidatePath(`/bookings/${parsed.data.bookingId}`);
-  return { ok: true };
 }
