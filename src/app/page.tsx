@@ -24,8 +24,14 @@ export default function LandingPage() {
           <a href="#faq">FAQ</a>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/login" className="text-sm text-ink-soft hover:text-ink hidden md:inline">
+          <Link href="/login" className="text-sm text-ink-soft hover:text-ink">
             Sign in
+          </Link>
+          <Link
+            href="/signup"
+            className="text-sm text-ink-soft hover:text-ink hidden md:inline"
+          >
+            Sign up
           </Link>
           <Link
             href="#signup"
@@ -92,7 +98,7 @@ export default function LandingPage() {
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div className="bg-ink text-white font-display font-bold px-5 py-3.5 rounded-xl">
-              📦 I need to send something
+              I need to send something
             </div>
             {SENDER_STEPS.map((s, i) => (
               <Step key={i} num={i + 1} title={s.title} body={s.body} />
@@ -100,7 +106,7 @@ export default function LandingPage() {
           </div>
           <div className="space-y-4">
             <div className="bg-accent text-white font-display font-bold px-5 py-3.5 rounded-xl">
-              🚂 I'm already travelling
+              I'm already travelling
             </div>
             {CARRIER_STEPS.map((s, i) => (
               <Step key={i} num={i + 1} title={s.title} body={s.body} />
@@ -285,12 +291,12 @@ const CARRIER_STEPS = [
 ];
 
 const WHY_CARDS = [
-  { icon: '⚡', title: 'Hours, not days', body: 'A London to Manchester train takes 2 hours. Your package can be there before Royal Mail even picks it up.' },
-  { icon: '🔒', title: 'Verified carriers only', body: "Every carrier verifies their government ID before they can accept jobs. You know exactly who's carrying your package." },
-  { icon: '💷', title: 'Fair pricing', body: "You set what you're willing to pay. Carriers aren't making a special trip — they're going anyway. That keeps prices honest." },
-  { icon: '📸', title: 'Photo proof every time', body: 'Photo taken at pickup. Photo taken at delivery. GPS-tagged. Full accountability built in.' },
-  { icon: '🌿', title: 'Better for the planet', body: "No extra van on the road. No extra carbon. The train is going anyway — we're just filling empty space." },
-  { icon: '💬', title: 'In-app coordination', body: "No sharing phone numbers. Sender and carrier communicate safely through RideDrop's built-in chat." },
+  { icon: '→', title: 'Hours, not days', body: 'A London to Manchester train takes 2 hours. Your package can be there before Royal Mail even picks it up.' },
+  { icon: '✓', title: 'Verified carriers only', body: "Every carrier verifies their government ID before they can accept jobs. You know exactly who's carrying your package." },
+  { icon: '£', title: 'Fair pricing', body: "You set what you're willing to pay. Carriers aren't making a special trip — they're going anyway. That keeps prices honest." },
+  { icon: '✓', title: 'Photo proof every time', body: 'Photo taken at pickup. Photo taken at delivery. GPS-tagged. Full accountability built in.' },
+  { icon: '→', title: 'Better for the planet', body: "No extra van on the road. No extra carbon. The train is going anyway — we're just filling empty space." },
+  { icon: '◇', title: 'In-app coordination', body: "No sharing phone numbers. Sender and carrier communicate safely through RideDrop's built-in chat." },
 ];
 
 const CARRIER_PERKS = [

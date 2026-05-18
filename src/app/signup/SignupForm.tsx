@@ -2,50 +2,50 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { getFriendlyErrorMessage, validateEmail, validatePassword } from '@/lib/error-messages';
+import { getFriendlyErrorMessage } from '@/lib/error-messages';
 import Alert from '@/components/Alert';
-
-type Role = 'sender' | 'carrier' | 'both';
 
 export default function SignupForm() {
   const router = useRouter();
-  const [role, setRole] = useState<Role>('sender');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError(null);
-    setValidationErrors({});
     setLoading(true);
+    setError(null);
 
     const fd = new FormData(e.currentTarget);
-    const firstName = String(fd.get('first_name') ?? '').trim();
-    const lastName = String(fd.get('last_name') ?? '').trim();
-    const email = String(fd.get('email') ?? '').trim();
-    const password = String(fd.get('password') ?? '');
+    const email = String(fd.get('email')).trim();
+    const password = String(fd.get('password'));
+    const confirmPassword = String(fd.get('confirmPassword'));
+    const firstName = String(fd.get('firstName')).trim();
+    const lastName = String(fd.get('lastName')).trim();
 
-    // Validate
-    const errors: Record<string, string> = {};
-    if (!firstName) errors.first_name = 'First name is required.';
-    if (!lastName) errors.last_name = 'Last name is required.';
-
-    const emailError = validateEmail(email);
-    if (emailError) errors.email = emailError;
-
-    const passwordError = validatePassword(password);
-    if (passwordError) errors.password = passwordError;
-    if (password.length < 8) errors.password = 'Password must be at least 8 characters.';
-
-    if (Object.keys(errors).length > 0) {
-      setValidationErrors(errors);
+    // Basic validation
+    if (!email || !password || !confirmPassword || !firstName || !lastName) {
+      setError('Please fill in all fields.');
       setLoading(false);
       return;
     }
 
-    const supabase  = createClient() as any;
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      setLoading(false);
+      return;
+    }
+
+    const supabase = createClient() as any;
+    
+    // Sign up with Supabase
     const { error: err } = await supabase.auth.signUp({
       email,
       password,
@@ -53,9 +53,7 @@ export default function SignupForm() {
         data: {
           first_name: firstName,
           last_name: lastName,
-          role,
         },
-        emailRedirectTo: (process.env.NEXT_PUBLIC_APP_URL ?? '') + '/dashboard',
       },
     });
 
@@ -68,7 +66,8 @@ export default function SignupForm() {
       return;
     }
 
-    router.push('/dashboard');
+    // Redirect to verify email page
+    router.push('/auth/verify-email?email=' + encodeURIComponent(email));
     router.refresh();
   }
 
@@ -82,62 +81,32 @@ export default function SignupForm() {
         />
       )}
 
-      <div>
-        <label className="block text-sm font-medium text-ink mb-2">I want to:</label>
-        <div className="flex gap-2">
-          {(['sender', 'carrier', 'both'] as Role[]).map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => setRole(r)}
-              disabled={loading}
-              className={`flex-1 rounded-full px-3 py-2 text-sm font-medium border transition disabled:opacity-50 ${
-                role === r
-                  ? 'bg-ink text-white border-ink'
-                  : 'bg-white text-ink-soft border-rail'
-              }`}
-            >
-              {r === 'sender' ? '📦 Send packages' : r === 'carrier' ? '🚂 Carry packages' : 'Both'}
-            </button>
-          ))}
-        </div>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-ink">First name</label>
+        <input
+          name="firstName"
+          type="text"
+          required
+          placeholder="John"
+          disabled={loading}
+          className="w-full border border-rail bg-white rounded-xl px-4 py-3 focus:border-accent-mid outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+        />
       </div>
 
-      <div className="flex gap-2">
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-ink mb-1">First name</label>
-          <input
-            name="first_name"
-            required
-            placeholder="John"
-            disabled={loading}
-            className={`w-full border rounded-xl px-4 py-3 focus:border-accent-mid outline-none disabled:opacity-50 ${
-              validationErrors.first_name ? 'border-red-300' : 'border-rail'
-            }`}
-          />
-          {validationErrors.first_name && (
-            <p className="text-xs text-red-600 mt-1">{validationErrors.first_name}</p>
-          )}
-        </div>
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-ink mb-1">Last name</label>
-          <input
-            name="last_name"
-            required
-            placeholder="Doe"
-            disabled={loading}
-            className={`w-full border rounded-xl px-4 py-3 focus:border-accent-mid outline-none disabled:opacity-50 ${
-              validationErrors.last_name ? 'border-red-300' : 'border-rail'
-            }`}
-          />
-          {validationErrors.last_name && (
-            <p className="text-xs text-red-600 mt-1">{validationErrors.last_name}</p>
-          )}
-        </div>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-ink">Last name</label>
+        <input
+          name="lastName"
+          type="text"
+          required
+          placeholder="Doe"
+          disabled={loading}
+          className="w-full border border-rail bg-white rounded-xl px-4 py-3 focus:border-accent-mid outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+        />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-ink mb-1">Email</label>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-ink">Email</label>
         <input
           name="email"
           type="email"
@@ -145,57 +114,42 @@ export default function SignupForm() {
           placeholder="you@example.com"
           autoComplete="email"
           disabled={loading}
-          className={`w-full border rounded-xl px-4 py-3 focus:border-accent-mid outline-none disabled:opacity-50 ${
-            validationErrors.email ? 'border-red-300' : 'border-rail'
-          }`}
+          className="w-full border border-rail bg-white rounded-xl px-4 py-3 focus:border-accent-mid outline-none disabled:opacity-50 disabled:cursor-not-allowed"
         />
-        {validationErrors.email && (
-          <p className="text-xs text-red-600 mt-1">{validationErrors.email}</p>
-        )}
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-ink mb-1">Password</label>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-ink">Password</label>
         <input
           name="password"
           type="password"
           required
-          minLength={8}
-          placeholder="At least 8 characters"
-          autoComplete="new-password"
+          placeholder="••••••••"
           disabled={loading}
-          className={`w-full border rounded-xl px-4 py-3 focus:border-accent-mid outline-none disabled:opacity-50 ${
-            validationErrors.password ? 'border-red-300' : 'border-rail'
-          }`}
+          className="w-full border border-rail bg-white rounded-xl px-4 py-3 focus:border-accent-mid outline-none disabled:opacity-50 disabled:cursor-not-allowed"
         />
-        {validationErrors.password && (
-          <p className="text-xs text-red-600 mt-1">{validationErrors.password}</p>
-        )}
-        <p className="text-xs text-ink-soft mt-1">Must be at least 8 characters for security.</p>
+        <p className="text-xs text-ink-muted">At least 8 characters</p>
+      </div>
+
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-ink">Confirm password</label>
+        <input
+          name="confirmPassword"
+          type="password"
+          required
+          placeholder="••••••••"
+          disabled={loading}
+          className="w-full border border-rail bg-white rounded-xl px-4 py-3 focus:border-accent-mid outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+        />
       </div>
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-ink text-white rounded-full px-6 py-3.5 font-medium hover:bg-accent transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        className="w-full bg-ink text-white rounded-full px-6 py-3.5 font-medium hover:bg-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {loading ? (
-          <>
-            <span className="animate-spin">⏳</span>
-            Creating account…
-          </>
-        ) : (
-          <>
-            Create account <span>→</span>
-          </>
-        )}
+        {loading ? 'Creating account...' : 'Create account'}
       </button>
-
-      <p className="text-xs text-ink-muted text-center font-light">
-        By signing up you agree to our{' '}
-        <a href="/terms" className="underline hover:text-ink transition">Terms</a> and{' '}
-        <a href="/privacy" className="underline hover:text-ink transition">Privacy Policy</a>.
-      </p>
     </form>
   );
 }
