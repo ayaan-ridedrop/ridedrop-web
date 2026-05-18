@@ -44,7 +44,7 @@ export default async function AdminPage() {
   }
 
   // Fetch user names for raised_by
-  const userIds = disputes?.map(d => d.raised_by) || [];
+  const userIds = disputes?.map((d: any) => d.raised_by) || [];
   const { data: profiles } = await (supabase
     .from('profiles') as any)
     .select('id, first_name, last_name')
