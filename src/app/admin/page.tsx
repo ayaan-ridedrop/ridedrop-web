@@ -1,197 +1,155 @@
-// /admin — RideDrop support dashboard. Gated by ADMIN_EMAILS env var.
-// V1 shows open disputes + recent waitlist signups. Phase 2 will add
-// user search, account suspension, manual payouts, etc.
-
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { createClient, createServiceClient } from '@/lib/supabase/server';
-import AppShell from '@/components/AppShell';
+import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/admin';
-import ResolveDisputeForm from './ResolveDisputeForm';
 
-export const metadata = { title: 'Admin · RideDrop' };
+export const metadata = {
+  title: 'Admin | RideDrop',
+};
 
 export default async function AdminPage() {
-  const supabase  = createClient() as any;
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  const supabase = createClient() as any;
 
-  if (!isAdminEmail(user.email)) {
-    return (
-      <AppShell user={{ email: user.email!, firstName: null }}>
-        <h1 className="text-3xl mb-2">No admin access</h1>
-        <p className="text-ink-soft font-light">
-          Your email is not on the admin allowlist. Ask Ayaan to add it to{' '}
-          <code>ADMIN_EMAILS</code> in the deployment env.
-        </p>
-      </AppShell>
-    );
+  // Check auth
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || !isAdminEmail(user.email)) {
+    redirect('/login');
   }
 
-  // Use the service-role client so we can see waitlist + cross-user data.
-  const admin = createServiceClient();
+  // Fetch all disputes with related data
+  const { data: disputes, error } = await (supabase
+    .from('disputes') as any)
+    .select(`
+      id,
+      booking_id,
+      raised_by,
+      reason,
+      description,
+      status,
+      resolution_notes,
+      resolved_at,
+      created_at,
+      bookings!inner (
+        id,
+        agreed_price_pence,
+        status,
+        sender_id,
+        carrier_id
+      )
+    `)
+    .order('created_at', { ascending: false });
 
-  const [
-    { data: openDisputes },
-    { data: recentWaitlist, count: waitlistCount },
-    { count: totalUsers },
-    { count: totalBookings },
-  ] = await Promise.all([
-    admin
-      .from('disputes')
-      .select(`
-        id, reason, description, status, raised_by, booking_id, created_at,
-        bookings!inner(id, status, agreed_price_pence,
-          jobs!inner(from_station, to_station, package_description),
-          sender:profiles!bookings_sender_id_fkey(first_name, last_name),
-          carrier:profiles!bookings_carrier_id_fkey(first_name, last_name))
-      `)
-      .in('status', ['open', 'reviewing'])
-      .order('created_at', { ascending: false })
-      .limit(20)
-      .then(r => Promise.resolve(r)),
-    admin
-      .from('waitlist')
-      .select('email, name, city, role_interest, created_at', { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .limit(20)
-      .then(r => Promise.resolve(r)),
-    admin.from('profiles').select('*', { count: 'exact', head: true })
-      .then(r => Promise.resolve(r)),
-    admin.from('bookings').select('*', { count: 'exact', head: true })
-      .then(r => Promise.resolve(r)),
-  ]);
+  if (error) {
+    console.error('Error fetching disputes:', error);
+  }
+
+  // Fetch user names for raised_by
+  const userIds = disputes?.map(d => d.raised_by) || [];
+  const { data: profiles } = await (supabase
+    .from('profiles') as any)
+    .select('id, first_name, last_name')
+    .in('id', userIds);
+
+  const profileMap = (profiles || []).reduce((acc: any, p: any) => {
+    acc[p.id] = `${p.first_name} ${p.last_name}`.trim() || 'Unknown';
+    return acc;
+  }, {});
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'open':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'reviewing':
+        return 'bg-blue-100 text-blue-800';
+      case 'resolved':
+        return 'bg-green-100 text-green-800';
+      case 'rejected':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   return (
-    <AppShell user={{ email: user.email!, firstName: 'Admin' }}>
-      <h1 className="text-4xl mb-2">RideDrop operations</h1>
-      <p className="text-ink-soft mb-8 font-light">
-        Internal view — only people on <code>ADMIN_EMAILS</code> can see this.
-      </p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
 
-      {/* Top-line counts */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
-        <Stat label="Users" value={String(totalUsers ?? 0)} />
-        <Stat label="Bookings" value={String(totalBookings ?? 0)} />
-        <Stat label="Waitlist" value={String(waitlistCount ?? 0)} />
-        <Stat
-          label="Open disputes"
-          value={String(openDisputes?.length ?? 0)}
-          warn={(openDisputes?.length ?? 0) > 0}
-        />
-      </div>
+        <div className="bg-white rounded-lg shadow">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-xl font-semibold">Disputes</h2>
+          </div>
 
-      {/* DISPUTES */}
-      <h2 className="text-2xl mb-4">Open disputes</h2>
-      {!openDisputes?.length ? (
-        <p className="text-ink-muted text-sm font-light mb-10">
-          No open disputes. 🎉
-        </p>
-      ) : (
-        <ul className="space-y-3 mb-10">
-          {openDisputes.map((d: any) => (
-            <li
-              key={d.id}
-              className="bg-white border border-rail rounded-2xl p-5"
-            >
-              <div className="flex justify-between items-start gap-4 mb-3">
-                <div>
-                  <div className="font-display font-bold">
-                    {d.bookings.jobs.from_station} → {d.bookings.jobs.to_station}
-                  </div>
-                  <div className="text-xs text-ink-muted">
-                    {d.bookings.jobs.package_description} · £
-                    {(d.bookings.agreed_price_pence / 100).toFixed(2)}
-                  </div>
-                  <div className="text-xs text-ink-muted mt-1">
-                    Sender: {d.bookings.sender.first_name}{' '}
-                    {d.bookings.sender.last_name?.[0]}. · Carrier:{' '}
-                    {d.bookings.carrier.first_name}{' '}
-                    {d.bookings.carrier.last_name?.[0]}.
-                  </div>
-                </div>
-                <Link
-                  href={`/bookings/${d.bookings.id}`}
-                  className="text-sm text-accent underline shrink-0"
-                >
-                  View booking →
-                </Link>
-              </div>
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-3 text-sm">
-                <div className="font-medium text-red-900 mb-1">{d.reason}</div>
-                {d.description && (
-                  <p className="text-red-800 font-light">{d.description}</p>
-                )}
-                <div className="text-xs text-red-700 mt-2">
-                  Raised {new Date(d.created_at).toLocaleString('en-GB')}
-                </div>
-              </div>
-              <ResolveDisputeForm disputeId={d.id} bookingId={d.bookings.id} />
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {/* WAITLIST */}
-      <h2 className="text-2xl mb-4">Recent waitlist signups</h2>
-      {!recentWaitlist?.length ? (
-        <p className="text-ink-muted text-sm font-light">No signups yet.</p>
-      ) : (
-        <div className="bg-white border border-rail rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-cream text-ink-muted text-xs uppercase tracking-wider">
-              <tr>
-                <th className="text-left px-4 py-3">When</th>
-                <th className="text-left px-4 py-3">Email</th>
-                <th className="text-left px-4 py-3">Name</th>
-                <th className="text-left px-4 py-3">City</th>
-                <th className="text-left px-4 py-3">Wants to</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentWaitlist.map((w: any) => (
-                <tr key={w.email} className="border-t border-rail">
-                  <td className="px-4 py-3 text-ink-muted">
-                    {new Date(w.created_at).toLocaleDateString('en-GB')}
-                  </td>
-                  <td className="px-4 py-3">{w.email}</td>
-                  <td className="px-4 py-3">{w.name ?? '—'}</td>
-                  <td className="px-4 py-3">{w.city ?? '—'}</td>
-                  <td className="px-4 py-3">{w.role_interest ?? '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {!disputes || disputes.length === 0 ? (
+            <div className="px-6 py-8 text-center text-gray-500">
+              No disputes found.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-100 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                      ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                      Raised By
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                      Reason
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                      Amount (£)
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                      Created
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {disputes.map((dispute: any) => (
+                    <tr key={dispute.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 text-sm font-mono text-gray-600">
+                        {dispute.id.slice(0, 8)}...
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {profileMap[dispute.raised_by] || 'Unknown'}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {dispute.reason}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        £{(dispute.bookings?.agreed_price_pence / 100).toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(dispute.status)}`}>
+                          {dispute.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {new Date(dispute.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4">
+                        <Link
+                          href={`/admin/disputes/${dispute.id}`}
+                          className="text-blue-600 hover:text-blue-800 font-semibold"
+                        >
+                          Review
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-      )}
-    </AppShell>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  warn,
-}: {
-  label: string;
-  value: string;
-  warn?: boolean;
-}) {
-  return (
-    <div
-      className={`rounded-2xl p-5 border ${
-        warn ? 'bg-red-50 border-red-200' : 'bg-white border-rail'
-      }`}
-    >
-      <div className="text-[10px] uppercase tracking-wider text-ink-muted mb-2">
-        {label}
-      </div>
-      <div
-        className={`font-display font-extrabold text-2xl ${
-          warn ? 'text-red-700' : ''
-        }`}
-      >
-        {value}
       </div>
     </div>
   );
