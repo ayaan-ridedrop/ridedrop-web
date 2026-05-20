@@ -33,7 +33,7 @@ export default async function DashboardPage() {
         .from('jobs')
         .select('id, from_station, to_station, status, max_budget_pence, created_at')
         .eq('sender_id', user.id)
-        .gt('must_arrive_by', new Date().toISOString())
+        .neq('status', 'cancelled')
         .order('created_at', { ascending: false })
         .limit(5),
       isCarrier
@@ -41,6 +41,7 @@ export default async function DashboardPage() {
             .from('journeys')
             .select('id, from_station, to_station, departure_at, status')
             .eq('carrier_id', user.id)
+            .neq('status', 'cancelled')
             .order('departure_at', { ascending: false })
             .limit(5)
         : Promise.resolve({ data: [] as any[] }),
