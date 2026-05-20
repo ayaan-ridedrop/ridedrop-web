@@ -26,6 +26,7 @@ export default async function BrowseJourneysPage({
     .select('id, from_station, to_station, departure_at, arrival_at, train_operator, minimum_price_pence, slots_remaining, carrier_id')
     .eq('status', 'listed')
     .gt('slots_remaining', 0)
+    .not('status', 'eq', 'cancelled')
     .order('departure_at', { ascending: true })
     .limit(50);
 

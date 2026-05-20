@@ -101,6 +101,7 @@ export default function TrainTimePicker({
         {services.slice(0, 8).map((service) => (
           <button
             key={service.id}
+            type="button"
             onClick={() => handleSelect(service)}
             disabled={disabled}
             className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition text-left ${

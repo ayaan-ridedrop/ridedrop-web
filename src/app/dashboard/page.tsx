@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
+import CancelJobButton from '@/app/send/CancelJobButton';
+import CancelJourneyButton from '@/app/journeys/new/CancelJourneyButton';
 import type { DashboardJob, DashboardJourney, DashboardBooking } from '@/lib/types';
 
 export default async function DashboardPage() {
@@ -137,7 +139,7 @@ export default async function DashboardPage() {
                 key={j.id}
                 className="bg-white border border-rail rounded-xl px-5 py-4 flex items-center justify-between"
               >
-                <div>
+                <div className="flex-1">
                   <div className="font-medium">
                     {j.from_station} → {j.to_station}
                   </div>
@@ -145,9 +147,14 @@ export default async function DashboardPage() {
                     {j.status}
                   </div>
                 </div>
-                <span className="font-display font-bold">
-                  £{(j.max_budget_pence / 100).toFixed(0)}
-                </span>
+                <div className="text-right">
+                  <span className="font-display font-bold block mb-2">
+                    £{(j.max_budget_pence / 100).toFixed(0)}
+                  </span>
+                  {j.status === 'open' && (
+                    <CancelJobButton jobId={j.id} />
+                  )}
+                </div>
               </li>
             ))}
           </ul>
@@ -174,7 +181,7 @@ export default async function DashboardPage() {
                   key={j.id}
                   className="bg-white border border-rail rounded-xl px-5 py-4 flex items-center justify-between"
                 >
-                  <div>
+                  <div className="flex-1">
                     <div className="font-medium">
                       {j.from_station} → {j.to_station}
                     </div>
@@ -182,6 +189,11 @@ export default async function DashboardPage() {
                       {new Date(j.departure_at).toLocaleString('en-GB')} · {j.status}
                     </div>
                   </div>
+                  {j.status === 'ticket_pending' && (
+                    <div className="ml-4">
+                      <CancelJourneyButton journeyId={j.id} />
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
