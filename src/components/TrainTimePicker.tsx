@@ -7,6 +7,7 @@ interface TrainTimePickerProps {
   fromStation: string;
   toStation: string;
   departureDate: string; // YYYY-MM-DD format
+  operator: string; // Filter to this operator
   onSelectTime: (departure: string, arrival: string, duration: string) => void;
   disabled?: boolean;
 }
@@ -15,6 +16,7 @@ export default function TrainTimePicker({
   fromStation,
   toStation,
   departureDate,
+  operator,
   onSelectTime,
   disabled,
 }: TrainTimePickerProps) {
@@ -23,9 +25,9 @@ export default function TrainTimePicker({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Load train schedule when stations or date change
+  // Load train schedule when stations, date, or operator change
   useEffect(() => {
-    if (!fromStation || !toStation || fromStation === toStation || !departureDate) {
+    if (!fromStation || !toStation || fromStation === toStation || !departureDate || !operator) {
       setServices([]);
       setSelectedId(null);
       return;
@@ -36,10 +38,12 @@ export default function TrainTimePicker({
       setError(null);
       try {
         const schedule = await getTrainSchedule(fromStation, toStation, departureDate);
-        setServices(schedule.services);
+        // Filter to only this operator's services
+        const operatorServices = schedule.services.filter(s => s.operator === operator);
+        setServices(operatorServices);
 
-        if (schedule.services.length === 0) {
-          setError('No trains found for this route. Please check the stations.');
+        if (operatorServices.length === 0) {
+          setError('No trains found for this operator on this route.');
         }
       } catch (err) {
         setError('Could not load train schedule. Please try again.');
@@ -50,17 +54,17 @@ export default function TrainTimePicker({
     }
 
     fetchSchedule();
-  }, [fromStation, toStation, departureDate]);
+  }, [fromStation, toStation, departureDate, operator]);
 
   function handleSelect(service: TrainService) {
     setSelectedId(service.id);
     onSelectTime(service.departure, service.arrival, service.duration);
   }
 
-  if (!fromStation || !toStation || fromStation === toStation) {
+  if (!fromStation || !toStation || fromStation === toStation || !departureDate || !operator) {
     return (
       <div className="text-sm text-ink-soft italic p-3 bg-gray-50 rounded-lg">
-        Select both stations to see available trains.
+        Select stations, date, and operator to see available times.
       </div>
     );
   }
@@ -99,7 +103,7 @@ export default function TrainTimePicker({
   return (
     <div className="space-y-2">
       <p className="text-xs font-medium text-ink-muted">
-        Departing {displayDate} — select a train:
+        {operator} departing {displayDate} — select a time:
       </p>
       <div className="grid gap-2">
         {services.slice(0, 8).map((service) => (
