@@ -139,7 +139,7 @@ export default function ProfileForm({
           <div className="font-medium mb-1">ID verification: {idStatus}</div>
           {idStatus === 'verified' ? (
             <p className="text-accent font-light leading-relaxed">
-              ✓ ID verified. You can now accept jobs and be paid.
+              ID verified. You can now accept jobs and be paid.
             </p>
           ) : (
             <>

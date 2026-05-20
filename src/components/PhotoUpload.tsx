@@ -102,7 +102,7 @@ export default function PhotoUpload({
         onClick={() => fileRef.current?.click()}
         className="bg-ink text-white rounded-full px-5 py-3 text-sm font-medium hover:bg-accent transition disabled:opacity-50"
       >
-        {uploading ? 'Uploading…' : `📷 Take ${kind} photo`}
+        {uploading ? 'Uploading…' : `Take ${kind} photo`}
       </button>
       <input
         ref={fileRef}

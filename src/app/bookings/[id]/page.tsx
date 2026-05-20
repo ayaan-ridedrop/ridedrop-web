@@ -156,7 +156,7 @@ export default async function BookingDetailPage({
           )}
           {youAreSender && b.stripe_payment_intent_id && (
             <div className="bg-accent-light border border-accent-mid rounded-2xl px-5 py-3 text-sm text-accent">
-              ✓ Paid · funds held in escrow until delivery confirmed
+              Paid - funds held in escrow until delivery confirmed
             </div>
           )}
           {youAreCarrier && !b.stripe_payment_intent_id && b.status === 'accepted' && (

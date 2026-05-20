@@ -43,7 +43,7 @@ export default function ConfirmDeliveryButton({
         disabled={submitting}
         className="bg-accent text-white rounded-full px-7 py-3 font-medium hover:bg-ink transition disabled:opacity-50"
       >
-        {submitting ? 'Confirming…' : '✓ Confirm delivery & release funds'}
+        {submitting ? 'Confirming…' : 'Confirm delivery and release funds'}
       </button>
       {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
     </div>

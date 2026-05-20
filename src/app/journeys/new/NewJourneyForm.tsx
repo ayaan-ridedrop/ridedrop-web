@@ -135,7 +135,7 @@ export default function NewJourneyForm() {
           />
           {selectedDeparture && (
             <p className="text-xs text-green-600 mt-2">
-              ✓ Selected: {selectedDeparture} → {selectedArrival}
+              Selected: {selectedDeparture} → {selectedArrival}
             </p>
           )}
         </Field>
@@ -192,25 +192,16 @@ export default function NewJourneyForm() {
       </label>
 
       <p className="text-xs text-ink-muted font-light leading-relaxed">
-        After submitting, your journey will be marked <em>ticket pending</em>.
-        You'll need to verify your ticket in the Supabase dashboard to go live.
+        After submitting, your journey will be marked <em>pending verification</em>.
+        You'll need to verify your train ticket to go live and start accepting deliveries.
       </p>
 
       <button
         type="submit"
         disabled={submitting || !selectedDeparture || !selectedArrival}
-        className="w-full bg-ink text-white rounded-full px-7 py-3.5 font-medium hover:bg-accent transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        className="w-full bg-ink text-white rounded-full px-7 py-3.5 font-medium hover:bg-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {submitting ? (
-          <>
-            <span className="animate-spin">⏳</span>
-            Submitting…
-          </>
-        ) : (
-          <>
-            List journey <span>→</span>
-          </>
-        )}
+        {submitting ? 'Submitting…' : 'List journey'}
       </button>
     </form>
   );

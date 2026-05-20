@@ -213,18 +213,9 @@ export default function SendJobForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full bg-ink text-white rounded-full px-7 py-3.5 font-medium hover:bg-accent transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        className="w-full bg-ink text-white rounded-full px-7 py-3.5 font-medium hover:bg-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {submitting ? (
-          <>
-            <span className="animate-spin">⏳</span>
-            Posting…
-          </>
-        ) : (
-          <>
-            Post job <span>→</span>
-          </>
-        )}
+        {submitting ? 'Posting…' : 'Post job'}
       </button>
     </form>
   );
