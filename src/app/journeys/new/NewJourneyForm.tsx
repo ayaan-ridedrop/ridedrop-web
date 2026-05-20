@@ -7,7 +7,7 @@ import { getFriendlyErrorMessage } from '@/lib/error-messages';
 import Alert from '@/components/Alert';
 import OperatorPicker from '@/components/OperatorPicker';
 import TrainTimePicker from '@/components/TrainTimePicker';
-import PhotoUpload from '@/components/PhotoUpload';
+import TicketPhotoUpload from '@/components/TicketPhotoUpload';
 import { UK_STATIONS } from '@/lib/types';
 
 export default function NewJourneyForm() {
@@ -256,14 +256,13 @@ export default function NewJourneyForm() {
 
           {/* Step 6: Ticket upload */}
           <Field label="Ticket verification">
-            <PhotoUpload
+            <TicketPhotoUpload
               onPhotoCapture={(photo) => setTicketPhoto(photo)}
               disabled={submitting}
-              label="Take photo of your ticket"
             />
             {ticketPhoto && (
               <div className="mt-2 text-xs text-green-600">
-                Ticket photo uploaded
+                Ticket photo uploaded and ready for verification
               </div>
             )}
           </Field>
