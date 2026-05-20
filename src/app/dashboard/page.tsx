@@ -137,16 +137,16 @@ export default async function DashboardPage() {
             {recentJobs.map((j) => (
               <li
                 key={j.id}
-                className="bg-white border border-rail rounded-xl px-5 py-4 flex items-center justify-between"
+                className="bg-white border border-rail rounded-xl px-5 py-4 flex items-center justify-between hover:border-accent-mid transition"
               >
-                <div className="flex-1">
-                  <div className="font-medium">
+                <Link href={`/send`} className="flex-1 block">
+                  <div className="font-medium hover:text-accent">
                     {j.from_station} → {j.to_station}
                   </div>
                   <div className="text-xs text-ink-muted uppercase tracking-wider">
                     {j.status}
                   </div>
-                </div>
+                </Link>
                 <div className="text-right">
                   <span className="font-display font-bold block mb-2">
                     £{(j.max_budget_pence / 100).toFixed(0)}
