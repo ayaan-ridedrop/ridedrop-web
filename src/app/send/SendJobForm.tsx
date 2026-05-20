@@ -33,6 +33,7 @@ export default function SendJobForm() {
     if (fromStation === toStation) errors.to_station = 'Pickup and delivery stations must be different.';
     if (!description) errors.package_description = 'Please describe the package.';
     if (budget < 5) errors.budget = 'Budget must be at least £5.';
+    if (!fd.get('must_arrive_by')) errors.must_arrive_by = 'Please tell us when the package needs to arrive.';
 
     if (!declaration) {
       errors.declaration = 'You must confirm the contents declaration.';
@@ -106,14 +107,20 @@ export default function SendJobForm() {
         <StationSelect name="to_station" disabled={submitting} />
       </Field>
 
-      <Field label="Must arrive by (optional)">
+      <Field
+        label="Must arrive by"
+        error={validationErrors.must_arrive_by}
+      >
         <input
           name="must_arrive_by"
           type="datetime-local"
+          required
           disabled={submitting}
-          className="w-full border border-rail rounded-xl px-4 py-3 outline-none focus:border-accent-mid disabled:opacity-50"
+          className={`w-full border rounded-xl px-4 py-3 outline-none focus:border-accent-mid disabled:opacity-50 ${
+            validationErrors.must_arrive_by ? 'border-red-300' : 'border-rail'
+          }`}
         />
-        <p className="text-xs text-ink-soft mt-1">Leave blank if there's no rush.</p>
+        <p className="text-xs text-ink-soft mt-1">The job will auto-cancel once this date/time passes.</p>
       </Field>
 
       <Field

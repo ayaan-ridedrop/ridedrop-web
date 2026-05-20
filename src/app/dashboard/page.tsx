@@ -33,6 +33,7 @@ export default async function DashboardPage() {
         .from('jobs')
         .select('id, from_station, to_station, status, max_budget_pence, created_at')
         .eq('sender_id', user.id)
+        .gt('must_arrive_by', new Date().toISOString())
         .order('created_at', { ascending: false })
         .limit(5),
       isCarrier
@@ -137,22 +138,24 @@ export default async function DashboardPage() {
             {recentJobs.map((j) => (
               <li
                 key={j.id}
-                className="bg-white border border-rail rounded-xl px-5 py-4 flex items-center justify-between hover:border-accent-mid transition"
+                className="bg-white border border-rail rounded-xl px-5 py-4 flex items-center justify-between"
               >
-                <Link href={`/send`} className="flex-1 block">
-                  <div className="font-medium hover:text-accent">
+                <div className="flex-1">
+                  <div className="font-medium">
                     {j.from_station} → {j.to_station}
                   </div>
                   <div className="text-xs text-ink-muted uppercase tracking-wider">
                     {j.status}
                   </div>
-                </Link>
+                </div>
                 <div className="text-right">
-                  <span className="font-display font-bold block mb-2">
+                  <span className="font-display font-bold block mb-3">
                     £{(j.max_budget_pence / 100).toFixed(0)}
                   </span>
-                  {j.status === 'open' && (
+                  {j.status === 'open' ? (
                     <CancelJobButton jobId={j.id} />
+                  ) : (
+                    <span className="text-xs text-ink-muted">{j.status}</span>
                   )}
                 </div>
               </li>
