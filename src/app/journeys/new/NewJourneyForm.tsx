@@ -14,6 +14,7 @@ export default function NewJourneyForm() {
   const [error, setError] = useState<string | null>(null);
   const [fromStation, setFromStation] = useState('');
   const [toStation, setToStation] = useState('');
+  const [departureDate, setDepartureDate] = useState('');
   const [selectedDeparture, setSelectedDeparture] = useState<string | null>(null);
   const [selectedArrival, setSelectedArrival] = useState<string | null>(null);
 
@@ -28,6 +29,11 @@ export default function NewJourneyForm() {
 
     if (!fromStn || !toStn) {
       setError('Please select both stations.');
+      return;
+    }
+
+    if (!departureDate) {
+      setError('Please select a travel date.');
       return;
     }
 
@@ -47,13 +53,9 @@ export default function NewJourneyForm() {
     }
 
     // Build datetime strings
-    // Selected times are HH:MM, so we need to add a date
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const dateStr = tomorrow.toISOString().split('T')[0];
-
-    const departure_at = `${dateStr}T${selectedDeparture}:00`;
-    const arrival_at = `${dateStr}T${selectedArrival}:00`;
+    // Selected times are HH:MM and departureDate is YYYY-MM-DD
+    const departure_at = `${departureDate}T${selectedDeparture}:00`;
+    const arrival_at = `${departureDate}T${selectedArrival}:00`;
 
     const capacity = Number(fd.get('capacity') ?? 1);
     const { error: err } = await supabase.from('journeys').insert({
@@ -122,11 +124,27 @@ export default function NewJourneyForm() {
         />
       </Field>
 
-      {fromStation && toStation && (
+      <Field label="Travel date">
+        <input
+          type="date"
+          value={departureDate}
+          onChange={(e) => {
+            setDepartureDate(e.target.value);
+            setSelectedDeparture(null);
+            setSelectedArrival(null);
+          }}
+          disabled={submitting}
+          min={new Date().toISOString().split('T')[0]}
+          className="w-full border border-rail rounded-xl px-4 py-3 outline-none focus:border-accent-mid disabled:opacity-50"
+        />
+      </Field>
+
+      {fromStation && toStation && departureDate && (
         <Field label="Select departure time">
           <TrainTimePicker
             fromStation={fromStation}
             toStation={toStation}
+            departureDate={departureDate}
             onSelectTime={(dep, arr, duration) => {
               setSelectedDeparture(dep);
               setSelectedArrival(arr);

@@ -6,6 +6,7 @@ import { getTrainSchedule, TrainService } from '@/lib/darwin-api';
 interface TrainTimePickerProps {
   fromStation: string;
   toStation: string;
+  departureDate: string; // YYYY-MM-DD format
   onSelectTime: (departure: string, arrival: string, duration: string) => void;
   disabled?: boolean;
 }
@@ -13,6 +14,7 @@ interface TrainTimePickerProps {
 export default function TrainTimePicker({
   fromStation,
   toStation,
+  departureDate,
   onSelectTime,
   disabled,
 }: TrainTimePickerProps) {
@@ -21,9 +23,9 @@ export default function TrainTimePicker({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Load train schedule when stations change
+  // Load train schedule when stations or date change
   useEffect(() => {
-    if (!fromStation || !toStation || fromStation === toStation) {
+    if (!fromStation || !toStation || fromStation === toStation || !departureDate) {
       setServices([]);
       setSelectedId(null);
       return;
@@ -33,11 +35,7 @@ export default function TrainTimePicker({
       setLoading(true);
       setError(null);
       try {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const dateStr = tomorrow.toISOString().split('T')[0];
-
-        const schedule = await getTrainSchedule(fromStation, toStation, dateStr);
+        const schedule = await getTrainSchedule(fromStation, toStation, departureDate);
         setServices(schedule.services);
 
         if (schedule.services.length === 0) {
@@ -52,7 +50,7 @@ export default function TrainTimePicker({
     }
 
     fetchSchedule();
-  }, [fromStation, toStation]);
+  }, [fromStation, toStation, departureDate]);
 
   function handleSelect(service: TrainService) {
     setSelectedId(service.id);
@@ -92,10 +90,16 @@ export default function TrainTimePicker({
     );
   }
 
+  const displayDate = new Date(departureDate).toLocaleDateString('en-GB', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+
   return (
     <div className="space-y-2">
       <p className="text-xs font-medium text-ink-muted">
-        Departing tomorrow — select a train:
+        Departing {displayDate} — select a train:
       </p>
       <div className="grid gap-2">
         {services.slice(0, 8).map((service) => (
@@ -127,7 +131,7 @@ export default function TrainTimePicker({
         ))}
       </div>
       <p className="text-xs text-ink-soft">
-        Showing {Math.min(8, services.length)} of {services.length} available trains tomorrow.
+        Showing {Math.min(8, services.length)} of {services.length} available trains on {displayDate}.
       </p>
     </div>
   );
