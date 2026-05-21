@@ -51,7 +51,7 @@ export default function AcceptJobButton({ jobId }: { jobId: string }) {
       .gt('slots_remaining', 0);
 
     if (!carrierJourneys || carrierJourneys.length === 0) {
-      setError('You don't have any matching journeys for this route');
+      setError('You don\'t have any matching journeys for this route');
       setLoading(false);
       return;
     }
