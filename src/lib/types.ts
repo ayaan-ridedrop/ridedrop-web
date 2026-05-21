@@ -229,6 +229,115 @@ export interface BrowseJourney extends Pick<Journey, 'id' | 'from_station' | 'to
 // Job detail page matching journeys
 export interface MatchingJourney extends Pick<Journey, 'id' | 'departure_at' | 'train_operator' | 'minimum_price_pence' | 'slots_remaining'> {}
 
+// Station coordinates (lat, lng) for distance calculations
+export const STATION_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  "London Euston": { lat: 51.5273, lng: -0.1276 },
+  "London King's Cross": { lat: 51.5308, lng: -0.1119 },
+  "London Paddington": { lat: 51.5156, lng: -0.1757 },
+  "London Waterloo": { lat: 51.5050, lng: -0.1123 },
+  "London Victoria": { lat: 51.4926, lng: -0.1441 },
+  "London St Pancras": { lat: 51.5331, lng: -0.1234 },
+  "London Liverpool Street": { lat: 51.5177, lng: -0.0820 },
+  "London Bridge": { lat: 51.5045, lng: -0.0857 },
+  "Manchester Piccadilly": { lat: 53.4778, lng: -2.2292 },
+  "Manchester Victoria": { lat: 53.4883, lng: -2.2381 },
+  "Birmingham New Street": { lat: 52.5079, lng: -1.9012 },
+  "Birmingham Moor Street": { lat: 52.5091, lng: -1.9084 },
+  "Leeds": { lat: 53.7955, lng: -1.7481 },
+  "Sheffield": { lat: 53.3719, lng: -1.4659 },
+  "York": { lat: 53.9576, lng: -1.0821 },
+  "Newcastle": { lat: 54.9680, lng: -1.6253 },
+  "Edinburgh Waverley": { lat: 55.9523, lng: -3.1879 },
+  "Glasgow Central": { lat: 55.8642, lng: -4.2577 },
+  "Bristol Temple Meads": { lat: 51.4494, lng: -2.5809 },
+  "Cardiff Central": { lat: 51.4755, lng: -3.1764 },
+  "Liverpool Lime Street": { lat: 53.4069, lng: -2.9600 },
+  "Nottingham": { lat: 52.9397, lng: -1.1384 },
+  "Leicester": { lat: 52.6204, lng: -1.1426 },
+  "Derby": { lat: 52.9217, lng: -1.4771 },
+  "Coventry": { lat: 52.4681, lng: -1.5413 },
+  "Reading": { lat: 51.4367, lng: -0.9720 },
+  "Oxford": { lat: 51.7551, lng: -1.2618 },
+  "Cambridge": { lat: 52.1275, lng: 0.1367 },
+  "Brighton": { lat: 50.8611, lng: -0.0820 },
+  "Southampton Central": { lat: 50.9058, lng: -1.4139 },
+  "Portsmouth Harbour": { lat: 50.7970, lng: -1.1110 },
+  "Exeter St Davids": { lat: 50.7185, lng: -3.5340 },
+  "Plymouth": { lat: 50.3625, lng: -4.1413 },
+  "Doncaster": { lat: 53.5236, lng: -1.1408 },
+  "Huddersfield": { lat: 53.6453, lng: -1.7788 },
+  "Bradford Interchange": { lat: 53.7931, lng: -1.7593 },
+  "Wakefield Westgate": { lat: 53.6805, lng: -1.4970 },
+  "Harrogate": { lat: 55.8891, lng: -1.5350 },
+  "Scarborough": { lat: 54.3785, lng: -0.4888 },
+  "Hull": { lat: 53.7459, lng: -0.3386 },
+  "Lincoln Central": { lat: 53.2282, lng: -0.5539 },
+  "Peterborough": { lat: 52.5712, lng: -0.2425 },
+  "Ipswich": { lat: 52.0528, lng: 1.1434 },
+  "Norwich": { lat: 52.6277, lng: 1.2978 },
+  "Chelmsford": { lat: 51.8948, lng: 0.4694 },
+  "Luton Airport Parkway": { lat: 51.8748, lng: -0.3842 },
+  "Watford Junction": { lat: 51.6519, lng: -0.3965 },
+  "Milton Keynes Central": { lat: 52.0367, lng: -0.7594 },
+  "Northampton": { lat: 52.2366, lng: -0.8933 },
+  "Rugby": { lat: 52.3718, lng: -1.2662 },
+  "Crewe": { lat: 53.0929, lng: -2.4357 },
+  "Stoke-on-Trent": { lat: 53.0024, lng: -2.1853 },
+  "Chester": { lat: 53.1923, lng: -2.8915 },
+  "Wrexham General": { lat: 53.0445, lng: -2.9958 },
+  "Shrewsbury": { lat: 52.7092, lng: -2.7505 },
+  "Wolverhampton": { lat: 52.5886, lng: -2.1299 },
+  "Walsall": { lat: 52.5835, lng: -1.9823 },
+  "Preston": { lat: 53.7631, lng: -2.7063 },
+  "Blackpool North": { lat: 53.8170, lng: -3.0569 },
+  "Lancaster": { lat: 54.0664, lng: -2.8007 },
+  "Penrith": { lat: 54.6632, lng: -2.7498 },
+  "Carlisle": { lat: 54.8929, lng: -2.9380 },
+  "Macclesfield": { lat: 53.2596, lng: -2.1378 },
+  "Stockport": { lat: 53.4091, lng: -2.1614 },
+  "Bolton": { lat: 53.5768, lng: -2.4269 },
+  "Wigan North Western": { lat: 53.5452, lng: -2.6303 },
+  "Warrington Bank Quay": { lat: 53.3904, lng: -2.5954 },
+  "Aberdeen": { lat: 57.1425, lng: -2.0978 },
+  "Dundee": { lat: 56.9611, lng: -2.9697 },
+  "Perth": { lat: 56.3964, lng: -3.3983 },
+  "Stirling": { lat: 56.1245, lng: -3.9398 },
+  "Inverness": { lat: 57.4767, lng: -4.2255 },
+  "Fort William": { lat: 56.8224, lng: -5.1076 },
+};
+
+// Calculate distance between two stations using Haversine formula (km)
+export function calculateDistance(fromStation: string, toStation: string): number {
+  const from = STATION_COORDINATES[fromStation];
+  const to = STATION_COORDINATES[toStation];
+  if (!from || !to) return 0;
+
+  const R = 6371; // Earth's radius in km
+  const dLat = ((to.lat - from.lat) * Math.PI) / 180;
+  const dLng = ((to.lng - from.lng) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((from.lat * Math.PI) / 180) *
+      Math.cos((to.lat * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// Suggest price for a journey based on distance
+export function getSuggestedPrice(fromStation: string, toStation: string): number {
+  const distanceKm = calculateDistance(fromStation, toStation);
+
+  // Pricing tiers
+  if (distanceKm < 50) return 1000;       // < 50km = £10
+  if (distanceKm < 100) return 1500;      // 50-100km = £15
+  if (distanceKm < 150) return 2000;      // 100-150km = £20
+  if (distanceKm < 200) return 2500;      // 150-200km = £25
+  if (distanceKm < 300) return 3500;      // 200-300km = £35
+  return 4500;                             // 300km+ = £45
+}
+
 // Commission as a fraction (20%). Single source of truth.
 export const RIDEDROP_COMMISSION = 0.2;
 

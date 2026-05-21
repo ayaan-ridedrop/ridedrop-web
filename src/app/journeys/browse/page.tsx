@@ -1,6 +1,6 @@
 // /journeys/browse — sender browses available carrier journeys.
-// (In the prototype this is the "choose a carrier" step after posting a job.)
 
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
@@ -44,34 +44,38 @@ export default async function BrowseJourneysPage({
       </p>
 
       {!journeys?.length ? (
-        <div className="bg-white border border-rail rounded-2xl p-8 text-center text-ink-muted">
-          No matching journeys right now. Post a job and carriers can apply, or
-          check back later — new journeys are listed every day.
+        <div className="bg-blue-50 border border-blue-300 rounded-xl p-6 text-center">
+          <p className="text-ink-muted mb-3">No journeys match your route right now.</p>
+          <Link href="/send" className="text-sm text-accent underline font-medium">
+            Post a job instead — carriers will apply →
+          </Link>
         </div>
       ) : (
         <ul className="space-y-3">
           {journeys.map((j) => (
-            <li
-              key={j.id}
-              className="bg-white border border-rail rounded-2xl p-5 flex items-center justify-between"
-            >
-              <div>
-                <div className="font-display font-bold">
-                  {j.from_station} → {j.to_station}
+            <li key={j.id}>
+              <Link
+                href={`/journeys/${j.id}`}
+                className="bg-white border border-rail rounded-2xl p-5 flex items-center justify-between hover:border-accent transition"
+              >
+                <div>
+                  <div className="font-display font-bold">
+                    {j.from_station} → {j.to_station}
+                  </div>
+                  <div className="text-sm text-ink-muted">
+                    {new Date(j.departure_at).toLocaleString('en-GB')}
+                    {j.train_operator ? ` · ${j.train_operator}` : ''}
+                  </div>
                 </div>
-                <div className="text-sm text-ink-muted">
-                  {new Date(j.departure_at).toLocaleString('en-GB')}
-                  {j.train_operator ? ` · ${j.train_operator}` : ''}
+                <div className="text-right">
+                  <div className="font-display font-extrabold text-accent text-xl">
+                    £{(j.minimum_price_pence / 100).toFixed(0)}+
+                  </div>
+                  <div className="text-xs text-ink-muted">
+                    {j.slots_remaining} slot{j.slots_remaining === 1 ? '' : 's'} left
+                  </div>
                 </div>
-              </div>
-              <div className="text-right">
-                <div className="font-display font-extrabold text-accent text-xl">
-                  £{(j.minimum_price_pence / 100).toFixed(0)}+
-                </div>
-                <div className="text-xs text-ink-muted">
-                  {j.slots_remaining} slot{j.slots_remaining === 1 ? '' : 's'} left
-                </div>
-              </div>
+              </Link>
             </li>
           ))}
         </ul>

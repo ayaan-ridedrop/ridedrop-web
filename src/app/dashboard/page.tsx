@@ -49,7 +49,7 @@ export default async function DashboardPage() {
         .from('bookings')
         .select('id, status, agreed_price_pence, job_id, journey_id')
         .or(`sender_id.eq.${user.id},carrier_id.eq.${user.id}`)
-        .in('status', ['accepted', 'picked_up', 'in_transit'])
+        .in('status', ['accepted', 'picked_up', 'in_transit', 'delivered'])
         .limit(5),
     ]);
 
@@ -110,9 +110,14 @@ export default async function DashboardPage() {
             {activeBookings.map((b) => (
               <li
                 key={b.id}
-                className="bg-white border border-rail rounded-xl px-5 py-4 flex items-center justify-between"
+                className="bg-white border border-rail rounded-xl px-5 py-4 flex items-center justify-between hover:border-accent transition"
               >
-                <span className="text-sm">Booking · {b.status}</span>
+                <Link
+                  href={`/bookings/${b.id}`}
+                  className="flex-1 text-sm hover:text-accent"
+                >
+                  Booking · {b.status}
+                </Link>
                 <span className="font-display font-bold">
                   £{(b.agreed_price_pence / 100).toFixed(2)}
                 </span>

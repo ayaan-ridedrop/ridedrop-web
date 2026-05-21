@@ -8,7 +8,7 @@ import Alert from '@/components/Alert';
 import OperatorPicker from '@/components/OperatorPicker';
 import TrainTimePicker from '@/components/TrainTimePicker';
 import TicketPhotoUpload from '@/components/TicketPhotoUpload';
-import { UK_STATIONS } from '@/lib/types';
+import { UK_STATIONS, getSuggestedPrice } from '@/lib/types';
 
 export default function NewJourneyForm() {
   const router = useRouter();
@@ -21,6 +21,7 @@ export default function NewJourneyForm() {
   const [selectedDeparture, setSelectedDeparture] = useState<string | null>(null);
   const [selectedArrival, setSelectedArrival] = useState<string | null>(null);
   const [ticketPhoto, setTicketPhoto] = useState<string | null>(null);
+  const [suggestedPrice, setSuggestedPrice] = useState<number | null>(null);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -122,10 +123,16 @@ export default function NewJourneyForm() {
           name="from_station"
           value={fromStation}
           onChange={(e) => {
-            setFromStation(e.target.value);
+            const newFrom = e.target.value;
+            setFromStation(newFrom);
             setSelectedOperator('');
             setSelectedDeparture(null);
             setSelectedArrival(null);
+            if (newFrom && toStation) {
+              setSuggestedPrice(getSuggestedPrice(newFrom, toStation));
+            } else {
+              setSuggestedPrice(null);
+            }
           }}
           disabled={submitting}
         />
@@ -136,10 +143,16 @@ export default function NewJourneyForm() {
           name="to_station"
           value={toStation}
           onChange={(e) => {
-            setToStation(e.target.value);
+            const newTo = e.target.value;
+            setToStation(newTo);
             setSelectedOperator('');
             setSelectedDeparture(null);
             setSelectedArrival(null);
+            if (fromStation && newTo) {
+              setSuggestedPrice(getSuggestedPrice(fromStation, newTo));
+            } else {
+              setSuggestedPrice(null);
+            }
           }}
           disabled={submitting}
         />
@@ -236,6 +249,11 @@ export default function NewJourneyForm() {
                 disabled={submitting}
                 className="w-full border border-rail rounded-xl px-4 py-3 outline-none focus:border-accent-mid disabled:opacity-50"
               />
+              {suggestedPrice && (
+                <p className="text-xs text-accent mt-1 font-medium">
+                  Suggested: £{(suggestedPrice / 100).toFixed(0)}
+                </p>
+              )}
             </Field>
             <Field label="Max weight (kg)">
               <input
