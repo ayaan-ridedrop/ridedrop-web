@@ -124,13 +124,13 @@ export default function SendJobForm() {
       </Field>
 
       <Field
-        label="What is it?"
+        label="Item description and special instructions"
         error={validationErrors.package_description}
       >
         <input
           name="package_description"
           required
-          placeholder="e.g. Legal documents (envelope)"
+          placeholder="e.g. Glass vase (FRAGILE), laptop, documents, clothing, food items, etc. Add any special handling needed."
           disabled={submitting}
           className={`w-full border rounded-xl px-4 py-3 outline-none focus:border-accent-mid disabled:opacity-50 ${
             validationErrors.package_description ? 'border-red-300' : 'border-rail'
@@ -161,6 +161,7 @@ export default function SendJobForm() {
             disabled={submitting}
             className="w-full border border-rail rounded-xl px-4 py-3 outline-none focus:border-accent-mid disabled:opacity-50"
           />
+          <p className="text-xs text-ink-soft mt-1">1kg ≈ bag of sugar or small shoe box</p>
         </Field>
         <Field label="Declared value (£)">
           <input
@@ -189,6 +190,7 @@ export default function SendJobForm() {
             validationErrors.budget ? 'border-red-300' : 'border-rail'
           }`}
         />
+        <p className="text-xs text-ink-soft mt-1">Suggested: £5–50 depending on urgency and distance. Carriers keep 80%.</p>
       </Field>
 
       <label className={`flex items-start gap-3 cursor-pointer rounded-xl p-4 border transition ${
