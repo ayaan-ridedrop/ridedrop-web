@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -9,8 +9,31 @@ import Alert from '@/components/Alert';
 
 export default function SignupForm() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
+  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file.');
+      return;
+    }
+
+    setPhotoFile(file);
+    setError(null);
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setPhotoPreview(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,6 +54,12 @@ export default function SignupForm() {
       return;
     }
 
+    if (!photoFile) {
+      setError('Please upload a profile photo.');
+      setLoading(false);
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       setLoading(false);
@@ -44,9 +73,9 @@ export default function SignupForm() {
     }
 
     const supabase = createClient() as any;
-    
+
     // Sign up with Supabase
-    const { error: err } = await supabase.auth.signUp({
+    const { data: authData, error: authErr } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -57,12 +86,56 @@ export default function SignupForm() {
       },
     });
 
+    if (authErr) {
+      setLoading(false);
+      const friendlyError = getFriendlyErrorMessage(authErr.message);
+      setError(friendlyError);
+      console.error('[signup] error:', authErr);
+      return;
+    }
+
+    const userId = authData?.user?.id;
+    if (!userId) {
+      setLoading(false);
+      setError('Failed to create account. Please try again.');
+      return;
+    }
+
+    // Upload photo to Supabase Storage
+    const fileName = `${userId}-${Date.now()}.jpg`;
+    const { error: uploadErr } = await supabase.storage
+      .from('profile-photos')
+      .upload(fileName, photoFile, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (uploadErr) {
+      setLoading(false);
+      setError('Failed to upload photo. Please try again.');
+      console.error('[photo upload] error:', uploadErr);
+      return;
+    }
+
+    // Get public URL for the photo
+    const { data: publicUrl } = supabase.storage
+      .from('profile-photos')
+      .getPublicUrl(fileName);
+
+    // Update profile with photo URL
+    const { error: updateErr } = await supabase
+      .from('profiles')
+      .update({
+        avatar_url: publicUrl?.publicUrl,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', userId);
+
     setLoading(false);
 
-    if (err) {
-      const friendlyError = getFriendlyErrorMessage(err.message);
-      setError(friendlyError);
-      console.error('[signup] error:', err);
+    if (updateErr) {
+      setError('Failed to update profile. Please try again.');
+      console.error('[profile update] error:', updateErr);
       return;
     }
 
@@ -143,9 +216,28 @@ export default function SignupForm() {
         />
       </div>
 
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-ink">Profile photo</label>
+        <p className="text-xs text-ink-muted mb-2">Upload a clear photo of your face for verification</p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handlePhotoChange}
+          disabled={loading}
+          className="w-full border border-rail bg-white rounded-xl px-4 py-3 focus:border-accent-mid outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+        />
+        {photoPreview && (
+          <div className="mt-3">
+            <img src={photoPreview} alt="Profile preview" className="w-32 h-32 rounded-lg object-cover" />
+            <p className="text-xs text-green-600 mt-2">Photo selected ✓</p>
+          </div>
+        )}
+      </div>
+
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || !photoFile}
         className="w-full bg-ink text-white rounded-full px-6 py-3.5 font-medium hover:bg-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? 'Creating account...' : 'Create account'}

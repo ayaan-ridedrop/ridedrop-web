@@ -34,8 +34,8 @@ export default async function BookingDetailPage({
       *,
       jobs!inner(from_station, to_station, package_description, package_size, package_weight_kg, must_arrive_by, declared_value_pence),
       journeys!inner(departure_at, arrival_at, train_operator, train_number),
-      sender:profiles!bookings_sender_id_fkey(first_name, last_name),
-      carrier:profiles!bookings_carrier_id_fkey(first_name, last_name)
+      sender:profiles!bookings_sender_id_fkey(first_name, last_name, avatar_url),
+      carrier:profiles!bookings_carrier_id_fkey(first_name, last_name, avatar_url)
     `)
     .eq('id', params.id)
     .maybeSingle();
@@ -120,6 +120,26 @@ export default async function BookingDetailPage({
             ⚠ This booking is under dispute. Funds are frozen.
           </p>
         )}
+      </div>
+
+      {/* PROFILE CARD */}
+      <div className="bg-white border border-rail rounded-2xl p-6 mb-8">
+        <h3 className="text-sm text-ink-muted uppercase tracking-wider mb-4">
+          {youAreSender ? 'Your carrier' : 'Sender'}
+        </h3>
+        <div className="flex items-center gap-4">
+          {other?.avatar_url ? (
+            <img src={other.avatar_url} alt={otherName} className="w-20 h-20 rounded-full object-cover" />
+          ) : (
+            <div className="w-20 h-20 rounded-full bg-rail flex items-center justify-center text-ink-muted">
+              No photo
+            </div>
+          )}
+          <div>
+            <div className="font-display font-bold text-lg">{otherName}</div>
+            <div className="text-sm text-ink-soft">Verified user</div>
+          </div>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4 md:gap-6">

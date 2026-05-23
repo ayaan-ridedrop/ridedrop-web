@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { sendBookingNotification } from '@/lib/actions/send-booking-notification';
 
 export default function AcceptJobButton({ jobId }: { jobId: string }) {
   const router = useRouter();
@@ -28,15 +29,16 @@ export default function AcceptJobButton({ jobId }: { jobId: string }) {
     }
 
     // Get the job details
-    const { data: job } = await supabase
+    const { data: job, error: jobErr } = await supabase
       .from('jobs')
-      .select('from_station, to_station')
+      .select('from_station, to_station, sender_id')
       .eq('id', jobId)
       .single();
 
-    if (!job) {
-      setError('Job not found');
+    if (jobErr || !job) {
+      setError('Job not found or access denied. Try refreshing the page.');
       setLoading(false);
+      console.error('[job fetch] error:', jobErr);
       return;
     }
 
@@ -80,7 +82,7 @@ export default function AcceptJobButton({ jobId }: { jobId: string }) {
     }
 
     // Get job and journey details
-    const { data: job } = await supabase.from('jobs').select('max_budget_pence').eq('id', jobId).single();
+    const { data: job } = await supabase.from('jobs').select('max_budget_pence, sender_id, from_station, to_station').eq('id', jobId).single();
     const { data: journey } = await supabase.from('journeys').select('carrier_id').eq('id', selectedJourneyId).single();
 
     if (!job || !journey) {
@@ -103,7 +105,7 @@ export default function AcceptJobButton({ jobId }: { jobId: string }) {
       .insert({
         journey_id: selectedJourneyId,
         job_id: jobId,
-        sender_id: null, // Will be filled from job
+        sender_id: job.sender_id,
         carrier_id: user.id,
         agreed_price_pence: Math.round(agreedPrice * 100),
         status: 'accepted',
@@ -111,13 +113,44 @@ export default function AcceptJobButton({ jobId }: { jobId: string }) {
       .select()
       .single();
 
-    setSubmitting(false);
-
     if (err) {
+      setSubmitting(false);
       setError(err.message);
       return;
     }
 
+    // Update job status to 'matched' so it's no longer available
+    const { error: updateErr } = await supabase
+      .from('jobs')
+      .update({ status: 'matched' })
+      .eq('id', jobId);
+
+    if (updateErr) {
+      console.error('[job status update] error:', updateErr);
+      // Don't fail the whole thing if status update fails
+    }
+
+    // Get sender info for notification
+    const { data: senderProfile } = await supabase
+      .from('profiles')
+      .select('first_name, email')
+      .eq('id', job.sender_id)
+      .single();
+
+    // Send notification to sender
+    if (senderProfile?.email) {
+      const carrierName = `${user.email?.split('@')[0]}`;
+      await sendBookingNotification(
+        booking.id,
+        senderProfile.email,
+        senderProfile.first_name || 'User',
+        carrierName,
+        `${job.from_station} → ${job.to_station}`,
+        agreedPrice
+      );
+    }
+
+    setSubmitting(false);
     setShowModal(false);
     router.push(`/bookings/${booking.id}`);
     router.refresh();
