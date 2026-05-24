@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Alert from '@/components/Alert';
@@ -12,10 +12,42 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
+
+  useEffect(() => {
+    // On mount, check if recovery token is in URL and verify it
+    const verifyRecoveryToken = async () => {
+      const supabase = createClient() as any;
+
+      // Supabase automatically handles the token from the URL fragment
+      // Just verify we have a valid session
+      const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
+
+      if (sessionErr) {
+        setError('Invalid or expired recovery link. Please request a new one.');
+        console.error('Session error:', sessionErr);
+        return;
+      }
+
+      if (!session) {
+        setError('Invalid or expired recovery link. Please request a new one.');
+        return;
+      }
+
+      setSessionReady(true);
+    };
+
+    verifyRecoveryToken();
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+
+    if (!sessionReady) {
+      setError('Session not ready. Please try again.');
+      return;
+    }
 
     if (!password || !confirmPassword) {
       setError('Please fill in all fields.');
@@ -27,8 +59,8 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
       return;
     }
 
@@ -43,6 +75,7 @@ export default function ResetPasswordPage() {
 
     if (err) {
       setError(err.message || 'Failed to reset password. Please try again.');
+      console.error('Password update error:', err);
       return;
     }
 

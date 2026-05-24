@@ -70,7 +70,7 @@ export default function BookJourneyForm({
   }
 
   return (
-    <div className="bg-white border border-rail rounded-2xl p-6 sticky top-4">
+    <div className="bg-white border border-rail rounded-2xl p-6 md:sticky md:top-4">
       <h3 className="text-lg font-display font-bold mb-4">Book this journey</h3>
 
       <div className="space-y-4">

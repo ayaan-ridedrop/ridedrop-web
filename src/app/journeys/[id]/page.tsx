@@ -52,9 +52,9 @@ export default async function JourneyDetailPage({
         ← Back to journeys
       </Link>
 
-      <div className="mt-6 grid md:grid-cols-3 gap-6">
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Journey details */}
-        <div className="md:col-span-2 space-y-6">
+        <div className="col-span-1 md:col-span-2 space-y-6">
           <div className="bg-white border border-rail rounded-2xl p-6">
             <h1 className="text-4xl font-display font-bold mb-2">
               {j.from_station} → {j.to_station}
@@ -133,7 +133,7 @@ export default async function JourneyDetailPage({
         </div>
 
         {/* Booking form */}
-        <div className="md:col-span-1">
+        <div className="col-span-1">
           {senderJobs && senderJobs.length > 0 ? (
             <BookJourneyForm journeyId={j.id} jobs={senderJobs} />
           ) : (

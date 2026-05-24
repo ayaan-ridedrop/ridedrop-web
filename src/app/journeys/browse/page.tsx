@@ -26,14 +26,17 @@ export default async function BrowseJourneysPage({
     .select('id, from_station, to_station, departure_at, arrival_at, train_operator, minimum_price_pence, slots_remaining, carrier_id')
     .eq('status', 'listed')
     .gt('slots_remaining', 0)
-    .not('status', 'eq', 'cancelled')
     .order('departure_at', { ascending: true })
     .limit(50);
 
   if (searchParams.from) q = q.eq('from_station', searchParams.from);
   if (searchParams.to) q = q.eq('to_station', searchParams.to);
 
-  const { data: journeys } = await q as { data: BrowseJourney[] | null };
+  const { data: journeys, error: queryError } = await q as { data: BrowseJourney[] | null; error: any };
+
+  if (queryError) {
+    console.error('[browse journeys] query error:', queryError);
+  }
 
   return (
     <AppShell user={{ email: user.email!, firstName: profile?.first_name }}>
