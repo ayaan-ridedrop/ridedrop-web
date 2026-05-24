@@ -28,19 +28,26 @@ export default async function BookingDetailPage({
     .maybeSingle();
 
   // Fetch the booking with the related job, journey, and the two parties' profiles.
-  const { data: booking } = await supabase
+  const { data: booking, error: bookingErr } = await supabase
     .from('bookings')
     .select(`
       *,
-      jobs!inner(from_station, to_station, package_description, package_size, package_weight_kg, must_arrive_by, declared_value_pence),
-      journeys!inner(departure_at, arrival_at, train_operator, train_number),
-      sender:profiles!bookings_sender_id_fkey(first_name, last_name, avatar_url),
-      carrier:profiles!bookings_carrier_id_fkey(first_name, last_name, avatar_url)
+      jobs(from_station, to_station, package_description, package_size, package_weight_kg, must_arrive_by, declared_value_pence),
+      journeys(departure_at, arrival_at, train_operator, train_number),
+      sender:profiles!sender_id(first_name, last_name, avatar_url),
+      carrier:profiles!carrier_id(first_name, last_name, avatar_url)
     `)
     .eq('id', params.id)
     .maybeSingle();
 
-  if (!booking) notFound();
+  if (bookingErr) {
+    console.error('[booking detail] query error:', bookingErr);
+  }
+
+  if (!booking) {
+    console.error('[booking detail] booking not found:', params.id);
+    notFound();
+  }
 
   const b = booking as any;
   const youAreSender = b.sender_id === user.id;
