@@ -42,6 +42,14 @@ export default function AcceptJobButton({ jobId }: { jobId: string }) {
       return;
     }
 
+    // Prevent accepting own job
+    if (job.sender_id === user.id) {
+      setError('You cannot accept your own job.');
+      setLoading(false);
+      setShowModal(false);
+      return;
+    }
+
     // Get carrier's journeys that match this job's route (include both listed and pending verification)
     const { data: carrierJourneys } = await supabase
       .from('journeys')
@@ -152,7 +160,8 @@ export default function AcceptJobButton({ jobId }: { jobId: string }) {
 
     setSubmitting(false);
     setShowModal(false);
-    router.push(`/bookings/${booking.id}`);
+    // TODO: fix booking detail page, redirect to dashboard for now
+    router.push('/dashboard');
     router.refresh();
   }
 
