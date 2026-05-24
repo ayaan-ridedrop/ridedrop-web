@@ -27,29 +27,56 @@ export default async function BookingDetailPage({
     .eq('id', user.id)
     .maybeSingle();
 
-  // Fetch the booking with the related job, journey, and the two parties' profiles.
+  // Fetch the booking first (simpler query)
   const { data: booking, error: bookingErr } = await supabase
     .from('bookings')
-    .select(`
-      *,
-      jobs(from_station, to_station, package_description, package_size, package_weight_kg, must_arrive_by, declared_value_pence),
-      journeys(departure_at, arrival_at, train_operator, train_number),
-      sender:profiles!bookings_sender_id_fkey(first_name, last_name, avatar_url),
-      carrier:profiles!bookings_carrier_id_fkey(first_name, last_name, avatar_url)
-    `)
+    .select('*')
     .eq('id', params.id)
     .maybeSingle();
 
-  if (bookingErr) {
-    console.error('[booking detail] query error:', bookingErr);
-  }
-
-  if (!booking) {
-    console.error('[booking detail] booking not found, params:', params.id);
+  if (bookingErr || !booking) {
+    console.error('[booking detail] booking fetch error:', bookingErr, 'booking:', booking);
     notFound();
   }
 
-  const b = booking as any;
+  // Fetch job details
+  const { data: job } = await supabase
+    .from('jobs')
+    .select('from_station, to_station, package_description, package_size, package_weight_kg, must_arrive_by, declared_value_pence')
+    .eq('id', booking.job_id)
+    .maybeSingle();
+
+  // Fetch journey details
+  const { data: journey } = await supabase
+    .from('journeys')
+    .select('departure_at, arrival_at, train_operator, train_number')
+    .eq('id', booking.journey_id)
+    .maybeSingle();
+
+  // Fetch sender profile
+  const { data: sender } = await supabase
+    .from('profiles')
+    .select('first_name, last_name, avatar_url')
+    .eq('id', booking.sender_id)
+    .maybeSingle();
+
+  // Fetch carrier profile
+  const { data: carrier } = await supabase
+    .from('profiles')
+    .select('first_name, last_name, avatar_url')
+    .eq('id', booking.carrier_id)
+    .maybeSingle();
+
+  // Restructure data to match original format
+  const bookingData = {
+    ...booking,
+    jobs: job,
+    journeys: journey,
+    sender,
+    carrier,
+  } as any;
+
+  const b = bookingData;
   const youAreSender = b.sender_id === user.id;
   const youAreCarrier = b.carrier_id === user.id;
   if (!youAreSender && !youAreCarrier) notFound();
