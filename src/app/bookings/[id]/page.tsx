@@ -28,30 +28,29 @@ export default async function BookingDetailPage({
     .maybeSingle();
 
   // Fetch the booking - use original nested query format
-  try {
-    const { data: booking, error: bookingErr } = await supabase
-      .from('bookings')
-      .select(`
-        *,
-        jobs(from_station, to_station, package_description, package_size, package_weight_kg, must_arrive_by, declared_value_pence),
-        journeys(departure_at, arrival_at, train_operator, train_number),
-        sender:profiles!bookings_sender_id_fkey(first_name, last_name, avatar_url),
-        carrier:profiles!bookings_carrier_id_fkey(first_name, last_name, avatar_url)
-      `)
-      .eq('id', params.id)
-      .maybeSingle();
+  const { data: booking, error: bookingErr } = await supabase
+    .from('bookings')
+    .select(`
+      *,
+      jobs(from_station, to_station, package_description, package_size, package_weight_kg, must_arrive_by, declared_value_pence),
+      journeys(departure_at, arrival_at, train_operator, train_number),
+      sender:profiles!bookings_sender_id_fkey(first_name, last_name, avatar_url),
+      carrier:profiles!bookings_carrier_id_fkey(first_name, last_name, avatar_url)
+    `)
+    .eq('id', params.id)
+    .maybeSingle();
 
-    if (bookingErr) {
-      console.error('[booking detail] query error:', bookingErr);
-      notFound();
-    }
+  if (bookingErr) {
+    console.error('[booking detail] query error:', bookingErr);
+    notFound();
+  }
 
-    if (!booking) {
-      console.error('[booking detail] booking not found');
-      notFound();
-    }
+  if (!booking) {
+    console.error('[booking detail] booking not found');
+    notFound();
+  }
 
-    const b = booking as any;
+  const b = booking as any;
   const youAreSender = b.sender_id === user.id;
   const youAreCarrier = b.carrier_id === user.id;
   if (!youAreSender && !youAreCarrier) notFound();
