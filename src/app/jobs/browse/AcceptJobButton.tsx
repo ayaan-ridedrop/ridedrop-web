@@ -42,14 +42,14 @@ export default function AcceptJobButton({ jobId }: { jobId: string }) {
       return;
     }
 
-    // Get carrier's journeys that match this job's route
+    // Get carrier's journeys that match this job's route (include both listed and pending verification)
     const { data: carrierJourneys } = await supabase
       .from('journeys')
-      .select('id, departure_at, arrival_at, train_operator, minimum_price_pence, slots_remaining')
+      .select('id, departure_at, arrival_at, train_operator, minimum_price_pence, slots_remaining, status')
       .eq('carrier_id', user.id)
       .eq('from_station', job.from_station)
       .eq('to_station', job.to_station)
-      .eq('status', 'listed')
+      .in('status', ['listed', 'ticket_pending'])
       .gt('slots_remaining', 0);
 
     if (!carrierJourneys || carrierJourneys.length === 0) {
@@ -178,7 +178,17 @@ export default function AcceptJobButton({ jobId }: { jobId: string }) {
       {/* Modal */}
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-          <h3 className="text-xl font-display font-bold mb-4">Accept job</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-display font-bold">Accept job</h3>
+            <button
+              onClick={() => setShowModal(false)}
+              disabled={submitting}
+              className="text-ink-muted hover:text-ink text-2xl leading-none"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
 
           {loading ? (
             <p className="text-ink-soft">Loading your journeys...</p>

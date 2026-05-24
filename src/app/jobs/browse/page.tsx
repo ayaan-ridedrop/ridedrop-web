@@ -28,13 +28,17 @@ export default async function BrowseJobsPage({
     .from('jobs')
     .select('id, from_station, to_station, package_description, package_size, max_budget_pence, must_arrive_by, created_at')
     .eq('status', 'open')
-    .not('status', 'eq', 'cancelled')
-    .order('created_at', { ascending: false })
+    .gte('must_arrive_by', new Date().toISOString())
+    .order('must_arrive_by', { ascending: true })
     .limit(50);
   if (searchParams.from) q = q.eq('from_station', searchParams.from);
   if (searchParams.to) q = q.eq('to_station', searchParams.to);
 
-  const { data: jobs } = await q as { data: BrowseJob[] | null };
+  const { data: jobs, error: queryError } = await q as { data: BrowseJob[] | null; error: any };
+
+  if (queryError) {
+    console.error('[browse jobs] query error:', queryError);
+  }
 
   return (
     <AppShell user={{ email: user.email!, firstName: profile?.first_name }}>

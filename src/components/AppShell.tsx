@@ -10,7 +10,7 @@ export default function AppShell({
   user: { email: string; firstName?: string | null };
 }) {
   return (
-    <div className="min-h-screen flex flex-col pb-20 md:pb-0">
+    <div className="min-h-screen flex flex-col pb-24 md:pb-0">
       {/* TOP NAV */}
       <nav className="border-b border-rail bg-white/85 backdrop-blur sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-5 md:px-6 py-3 md:py-4 flex items-center justify-between">
@@ -51,14 +51,16 @@ export default function AppShell({
       </main>
 
       {/* MOBILE BOTTOM TAB BAR */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-rail z-40 pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-5 text-center text-[10px] font-medium text-ink-muted">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-rail z-40">
+        <div className="grid grid-cols-5 text-center text-xs font-medium text-ink-muted">
           <Tab href="/dashboard" icon="🏠" label="Home" />
           <Tab href="/send" icon="➕" label="Send" />
-          <Tab href="/bookings" icon="📍" label="Bookings" />
-          <Tab href="/notifications" icon="🔔" label="Activity" />
-          <Tab href="/profile" icon="👤" label="Me" />
+          <Tab href="/jobs/browse" icon="📦" label="Jobs" />
+          <Tab href="/bookings" icon="📍" label="Active" />
+          <Tab href="/profile" icon="👤" label="Profile" />
         </div>
+        {/* Safe area spacer for iPhone home indicator */}
+        <div className="h-[env(safe-area-inset-bottom,8px)]" />
       </nav>
     </div>
   );
@@ -66,9 +68,9 @@ export default function AppShell({
 
 function Tab({ href, icon, label }: { href: string; icon: string; label: string }) {
   return (
-    <Link href={href} className="flex flex-col items-center py-2.5 hover:text-ink">
-      <span className="text-xl">{icon}</span>
-      <span className="mt-0.5">{label}</span>
+    <Link href={href} className="flex flex-col items-center justify-center py-3 px-2 min-h-[60px] hover:text-ink active:bg-rail/20">
+      <span className="text-2xl">{icon}</span>
+      <span className="mt-1 text-[11px]">{label}</span>
     </Link>
   );
 }

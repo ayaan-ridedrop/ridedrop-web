@@ -85,10 +85,11 @@ export default function NewJourneyForm() {
       minimum_price_pence: Math.round(Number(fd.get('min_price') ?? 0) * 100),
       max_weight_kg: Number(fd.get('max_weight_kg') ?? 5),
       food_ok: fd.get('food_ok') === 'on',
-      status: 'ticket_pending', // becomes 'listed' once ticket is verified
+      status: 'listed', // TODO: implement proper ticket verification with admin panel - for MVP auto-approved
     }).select().single();
 
     // TODO: Store ticket photo in Supabase Storage and link to journey
+    // TODO: Implement ticket verification system - review uploaded photos, confirm route matches
     // For now, ticket is validated on form submission but storage is not implemented yet
 
     let err = insertErr;
