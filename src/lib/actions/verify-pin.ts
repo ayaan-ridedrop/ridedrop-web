@@ -34,6 +34,11 @@ export async function verifyPin(formData: FormData) {
   if (!booking) return { error: 'Booking not found' };
   if (booking.carrier_id !== user.id) return { error: 'Only the carrier verifies PINs' };
 
+  // Pickup PIN requires payment to be made first
+  if (parsed.data.kind === 'pickup' && !booking.stripe_payment_intent_id) {
+    return { error: 'Payment must be made before pickup. Ask the sender to pay.' };
+  }
+
   const correctPin = parsed.data.kind === 'pickup' ? booking.pickup_pin : booking.delivery_pin;
   if (parsed.data.pin !== correctPin) {
     return { error: 'PIN does not match — ask the sender to re-read it' };
