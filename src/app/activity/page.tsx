@@ -16,10 +16,10 @@ export default async function ActivityPage() {
 
   const isCarrier = profile?.role === 'carrier' || profile?.role === 'both';
 
-  // Fetch all bookings (all statuses)
+  // Fetch all bookings with journey departure info
   const { data: bookings } = await supabase
     .from('bookings')
-    .select('id, status, agreed_price_pence, created_at')
+    .select('id, status, agreed_price_pence, created_at, journeys(departure_at)')
     .or(`sender_id.eq.${user.id},carrier_id.eq.${user.id}`)
     .order('created_at', { ascending: false });
 
@@ -54,11 +54,12 @@ export default async function ActivityPage() {
 
   const items: ActivityItem[] = [];
 
-  // Bookings
+  // Bookings (hide if journey date passed)
   bookings?.forEach((b: any) => {
-    const isActive = ['accepted', 'picked_up', 'in_transit'].includes(b.status);
-    const isPending = b.status === 'delivered';
-    const isHistory = ['completed', 'cancelled', 'disputed'].includes(b.status);
+    const journeyDeparted = b.journeys && new Date(b.journeys.departure_at) < new Date();
+    const isActive = ['accepted', 'picked_up', 'in_transit'].includes(b.status) && !journeyDeparted;
+    const isPending = b.status === 'delivered' && !journeyDeparted;
+    const isHistory = ['completed', 'cancelled', 'disputed'].includes(b.status) || journeyDeparted;
 
     items.push({
       type: 'booking',
