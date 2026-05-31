@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { Message } from '@/lib/types';
 
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+
 export default function ChatThread({
   bookingId,
   currentUserId,
@@ -91,7 +93,7 @@ export default function ChatThread({
     <div className="bg-white border border-rail rounded-2xl overflow-hidden flex flex-col"
          style={{ height: '380px' }}>
       <div className="px-4 py-3 border-b border-rail text-sm font-medium">
-        Chat with {otherName}
+        Chat with {capitalize(otherName)}
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-cream/40">
         {messages.length === 0 ? (

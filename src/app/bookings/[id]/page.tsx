@@ -47,7 +47,8 @@ export default async function BookingDetailPage({
   if (!youAreSender && !youAreCarrier) notFound();
 
   const other = youAreSender ? carrier : sender;
-  const otherName = `${other?.first_name ?? ''} ${other?.last_name?.[0] ?? ''}.`.trim();
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+  const otherName = capitalize(`${other?.first_name ?? ''} ${other?.last_name?.[0] ?? ''}.`.trim());
 
   // Fetch existing chat messages.
   const { data: messages } = await supabase
