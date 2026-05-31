@@ -41,7 +41,7 @@ export default async function YourJobsPage() {
           <p className="text-ink-soft mb-6">No open jobs. <Link href="/send" className="text-accent underline">Post a new one</Link>.</p>
         ) : (
           <ul className="space-y-3 mb-6">
-            {openJobs.map(j => (
+            {openJobs.map((j: any) => (
               <li key={j.id}>
                 <div className="bg-white border border-rail rounded-2xl p-5 flex items-start justify-between">
                   <div className="flex-1">

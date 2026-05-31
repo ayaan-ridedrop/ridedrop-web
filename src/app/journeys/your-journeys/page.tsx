@@ -42,7 +42,7 @@ export default async function YourJourneysPage() {
           <p className="text-ink-soft mb-6">No listed journeys. <Link href="/journeys/new" className="text-accent underline">List a new one</Link>.</p>
         ) : (
           <ul className="space-y-3 mb-6">
-            {listedJourneys.map(j => (
+            {listedJourneys.map((j: any) => (
               <li key={j.id}>
                 <div className="bg-white border border-rail rounded-2xl p-5 flex items-start justify-between">
                   <div className="flex-1">
@@ -71,7 +71,7 @@ export default async function YourJourneysPage() {
         <div className="mb-10">
           <h2 className="text-2xl font-display font-bold mb-4">Pending Verification ({pendingJourneys.length})</h2>
           <ul className="space-y-3 mb-6">
-            {pendingJourneys.map(j => (
+            {pendingJourneys.map((j: any) => (
               <li key={j.id}>
                 <div className="bg-amber-50 border border-amber-300 rounded-2xl p-5 flex items-start justify-between">
                   <div className="flex-1">
@@ -100,7 +100,7 @@ export default async function YourJourneysPage() {
         <div className="mb-10">
           <h2 className="text-2xl font-display font-bold mb-4">Full ({fullJourneys.length})</h2>
           <ul className="space-y-3 mb-6">
-            {fullJourneys.map(j => (
+            {fullJourneys.map((j: any) => (
               <li key={j.id}>
                 <div className="bg-white border border-rail rounded-2xl p-5 opacity-75">
                   <div className="font-display font-bold">
@@ -122,7 +122,7 @@ export default async function YourJourneysPage() {
         <div>
           <h2 className="text-2xl font-display font-bold mb-4">Past ({pastJourneys.length})</h2>
           <ul className="space-y-3">
-            {pastJourneys.map(j => (
+            {pastJourneys.map((j: any) => (
               <li key={j.id}>
                 <div className="bg-white border border-rail rounded-2xl p-5 opacity-50">
                   <div className="font-display font-bold">
