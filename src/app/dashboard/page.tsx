@@ -167,18 +167,10 @@ export default async function DashboardPage() {
         </section>
       )}
 
-      {/* HISTORY LINKS */}
+      {/* FULL ACTIVITY LINK */}
       <section className="space-y-2 text-sm">
-        <Link href="/jobs/your-jobs" className="block text-accent hover:underline">
-          → View all your jobs
-        </Link>
-        {isCarrier && (
-          <Link href="/journeys/your-journeys" className="block text-accent hover:underline">
-            → View all your journeys
-          </Link>
-        )}
-        <Link href="/bookings" className="block text-accent hover:underline">
-          → View all bookings
+        <Link href="/activity" className="block text-accent hover:underline font-medium">
+          → View all activity (bookings, jobs, journeys)
         </Link>
       </section>
     </AppShell>
