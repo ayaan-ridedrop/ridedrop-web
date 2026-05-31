@@ -24,7 +24,7 @@ export default function ChatThread({
 
   // Subscribe to new messages on this booking.
   useEffect(() => {
-    const supabase  = createClient() as any;
+    const supabase = createClient() as any;
     const channel = supabase
       .channel(`messages:${bookingId}`)
       .on(
@@ -36,6 +36,7 @@ export default function ChatThread({
           filter: `booking_id=eq.${bookingId}`,
         },
         (payload: { new: Message }) => {
+          console.log('[Chat] Received message from Realtime:', payload.new);
           setMessages((prev) => {
             const next = payload.new;
             if (prev.some((m) => m.id === next.id)) return prev;
@@ -43,9 +44,12 @@ export default function ChatThread({
           });
         },
       )
-      .subscribe();
+      .subscribe((status: string) => {
+        console.log('[Chat] Subscription status:', status);
+      });
 
     return () => {
+      console.log('[Chat] Unsubscribing from channel');
       void supabase.removeChannel(channel);
     };
   }, [bookingId]);
