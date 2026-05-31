@@ -52,8 +52,7 @@ export default function ProfileForm({
       .upload(fileName, file, { upsert: true });
 
     if (uploadErr) {
-      // Silently fail if bucket doesn't exist — photo is optional
-      console.warn('Photo upload failed (bucket may not exist):', uploadErr);
+      setError(`Photo upload failed: ${uploadErr.message}`);
       setPhotoUploading(false);
       return;
     }
