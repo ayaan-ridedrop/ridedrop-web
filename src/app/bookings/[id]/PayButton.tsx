@@ -22,12 +22,17 @@ export default function PayButton({
     try {
       const supabase = createClient() as any;
       console.log('Updating booking with mock payment...');
+      console.log('BookingId:', bookingId);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('Current user:', user);
+
       const { data, error: err } = await supabase
         .from('bookings')
         .update({ stripe_payment_intent_id: `mock_${Date.now()}` })
         .eq('id', bookingId);
 
-      console.log('Update response:', { data, err });
+      console.log('Update result:', { data, error: err });
 
       if (err) {
         console.error('Payment update failed:', err);
