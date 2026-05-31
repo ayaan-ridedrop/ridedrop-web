@@ -35,6 +35,7 @@ export default async function ProfilePage() {
         homeCity={profile?.home_city ?? ''}
         role={profile?.role ?? 'sender'}
         idStatus={carrierProfile?.id_verification_status ?? 'unverified'}
+        avatarUrl={profile?.avatar_url ?? null}
       />
     </AppShell>
   );
