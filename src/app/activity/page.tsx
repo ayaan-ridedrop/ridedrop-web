@@ -71,11 +71,14 @@ export default async function ActivityPage() {
     });
   });
 
-  // Jobs
+  // Jobs (hide if deadline passed)
   jobs?.forEach((j: any) => {
+    const deadlinePassed = new Date(j.deadline_at) < new Date();
+    if (deadlinePassed) return; // Skip expired jobs
+
     const isActive = j.status === 'open';
     const isPending = j.status === 'matched';
-    const isHistory = j.status === 'cancelled' || (j.status === 'matched' && new Date(j.deadline_at) < new Date());
+    const isHistory = j.status === 'cancelled';
 
     items.push({
       type: 'job',
@@ -84,17 +87,19 @@ export default async function ActivityPage() {
       status: j.status,
       price: j.max_budget_pence / 100,
       date: j.created_at,
-      section: isActive ? 'active' : isPending ? 'pending' : 'history',
+      section: isActive ? 'active' : isPending ? 'pending' : isHistory ? 'history' : 'history',
     });
   });
 
-  // Journeys
+  // Journeys (hide if departure time passed)
   journeys?.forEach((j: any) => {
     const depTime = new Date(j.departure_at);
     const now = new Date();
+    if (depTime < now && j.status !== 'full' && j.status !== 'cancelled') return; // Skip if past departure and not full/cancelled
+
     const isActive = j.status === 'listed' && depTime > now;
     const isPending = j.status === 'full' || (j.status === 'listed' && depTime <= now);
-    const isHistory = j.status === 'cancelled' || (j.status !== 'listed' && j.status !== 'full');
+    const isHistory = j.status === 'cancelled';
 
     items.push({
       type: 'journey',
@@ -103,7 +108,7 @@ export default async function ActivityPage() {
       status: j.status,
       price: null,
       date: j.created_at,
-      section: isActive ? 'active' : isPending ? 'pending' : 'history',
+      section: isActive ? 'active' : isPending ? 'pending' : isHistory ? 'history' : 'history',
     });
   });
 
