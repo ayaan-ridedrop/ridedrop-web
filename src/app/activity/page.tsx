@@ -47,7 +47,7 @@ export default async function ActivityPage() {
     id: string;
     title: string;
     status: string;
-    price?: number;
+    price?: number | null;
     date: string;
     section: 'active' | 'pending' | 'history';
   };
