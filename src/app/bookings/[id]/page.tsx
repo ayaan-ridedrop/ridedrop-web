@@ -122,25 +122,32 @@ export default async function BookingDetailPage({
         )}
       </div>
 
-      {/* PROFILE CARD */}
-      <div className="bg-white border border-rail rounded-2xl p-6 mb-8">
-        <h3 className="text-sm text-ink-muted uppercase tracking-wider mb-4">
-          {youAreSender ? 'Your carrier' : 'Sender'}
-        </h3>
-        <div className="flex items-center gap-4">
-          {other?.avatar_url ? (
-            <img src={other.avatar_url} alt={otherName} className="w-20 h-20 rounded-full object-cover" />
-          ) : (
-            <div className="w-20 h-20 rounded-full bg-rail flex items-center justify-center text-ink-muted">
-              No photo
+      {/* VERIFY IDENTITY (safety check) */}
+      {['accepted', 'picked_up', 'in_transit', 'delivered'].includes(booking.status) && (
+        <div className="bg-blue-50 border-2 border-blue-300 rounded-2xl p-6 mb-8">
+          <h3 className="text-sm text-blue-900 uppercase tracking-wider font-bold mb-4">
+            🔒 Verify identity before handoff
+          </h3>
+          <div className="flex items-center gap-4">
+            {other?.avatar_url ? (
+              <img src={other.avatar_url} alt={otherName} className="w-24 h-24 rounded-full object-cover border-2 border-blue-300" />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-blue-200 flex items-center justify-center text-blue-900 font-bold text-2xl">
+                ?
+              </div>
+            )}
+            <div>
+              <div className="font-display font-bold text-xl text-blue-900">{otherName}</div>
+              <div className="text-sm text-blue-800 mt-1">
+                {youAreSender ? 'Your carrier will collect the package' : 'You are collecting from the sender'}
+              </div>
+              <div className="text-xs text-blue-700 mt-2">
+                Make sure this matches the person you're meeting.
+              </div>
             </div>
-          )}
-          <div>
-            <div className="font-display font-bold text-lg">{otherName}</div>
-            <div className="text-sm text-ink-soft">Verified user</div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         <div className="col-span-1 space-y-4">
@@ -241,6 +248,7 @@ export default async function BookingDetailPage({
             <ConfirmDeliveryButton
               bookingId={booking.id}
               autoReleaseAt={booking.auto_release_at}
+              hasDeliveryPhoto={!!deliveryUrl}
             />
           )}
 

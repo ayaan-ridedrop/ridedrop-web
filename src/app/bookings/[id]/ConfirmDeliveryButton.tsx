@@ -6,14 +6,20 @@ import { confirmDelivery } from '@/lib/actions/confirm-delivery';
 export default function ConfirmDeliveryButton({
   bookingId,
   autoReleaseAt,
+  hasDeliveryPhoto,
 }: {
   bookingId: string;
   autoReleaseAt: string | null;
+  hasDeliveryPhoto?: boolean;
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function go() {
+    if (!hasDeliveryPhoto) {
+      setError('Delivery photo is required before confirming');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     const fd = new FormData();
