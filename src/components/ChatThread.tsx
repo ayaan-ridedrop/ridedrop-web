@@ -27,8 +27,8 @@ export default function ChatThread({
     const supabase = createClient() as any;
     const channel = supabase
       .channel(`chat:${bookingId}`)
-      .on('broadcast', { event: 'new_message' }, ({ payload }) => {
-        const newMessage = payload.message as Message;
+      .on('broadcast', { event: 'new_message' }, ({ payload }: { payload: { message: Message } }) => {
+        const newMessage = payload.message;
         setMessages((prev) => {
           if (prev.some((m) => m.id === newMessage.id)) return prev;
           return [...prev, newMessage];
