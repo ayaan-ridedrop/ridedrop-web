@@ -15,7 +15,7 @@ export default async function BookingsListPage() {
     .eq('id', user.id)
     .maybeSingle();
 
-  const { data: bookings } = await supabase
+  const { data: bookings, error: bookingsError } = await supabase
     .from('bookings')
     .select(`
       id, status, agreed_price_pence, commission_pence, created_at,
@@ -25,6 +25,14 @@ export default async function BookingsListPage() {
     `)
     .or(`sender_id.eq.${user.id},carrier_id.eq.${user.id}`)
     .order('created_at', { ascending: false });
+
+  if (bookingsError) {
+    console.error('[bookings page] RLS or query error:', {
+      code: bookingsError.code,
+      message: bookingsError.message,
+      userId: user.id,
+    });
+  }
 
   return (
     <AppShell user={{ email: user.email!, firstName: profile?.first_name }}>
