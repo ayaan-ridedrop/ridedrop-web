@@ -57,14 +57,34 @@ export default function ChatThread({
     const trimmed = body.trim();
     if (!trimmed) return;
     setSending(true);
-    const supabase  = createClient() as any;
+
+    // Optimistic update: add message immediately
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMessage: Message = {
+      id: tempId,
+      booking_id: bookingId,
+      sender_id: currentUserId,
+      body: trimmed,
+      read_at: null,
+      created_at: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, optimisticMessage]);
+    setBody('');
+
+    // Send to server
+    const supabase = createClient() as any;
     const { error } = await supabase.from('messages').insert({
       booking_id: bookingId,
       sender_id: currentUserId,
       body: trimmed,
     });
     setSending(false);
-    if (!error) setBody('');
+
+    if (error) {
+      // If error, remove optimistic message
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      alert('Failed to send message');
+    }
   }
 
   return (
