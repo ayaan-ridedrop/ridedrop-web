@@ -24,11 +24,15 @@ export default function PayButton({
       .from('bookings')
       .update({ stripe_payment_intent_id: `mock_${Date.now()}` })
       .eq('id', bookingId);
-    setSubmitting(false);
+
     if (err) {
+      setSubmitting(false);
       setError(err.message);
       return;
     }
+
+    // Wait a moment then refresh to show updated state
+    await new Promise(resolve => setTimeout(resolve, 500));
     router.refresh();
   }
 
