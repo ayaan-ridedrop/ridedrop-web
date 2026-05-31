@@ -286,10 +286,16 @@ create policy "journeys_owner_update" on public.journeys for update using (carri
 drop policy if exists "journeys_owner_delete" on public.journeys;
 create policy "journeys_owner_delete" on public.journeys for delete using (carrier_id = auth.uid());
 
--- jobs: public read of 'open' jobs, owner sees own at any status, owner writes own
+-- jobs: public read of 'open' jobs, owner sees own at any status, booking participants can read booked jobs
 drop policy if exists "jobs_read_open_or_own" on public.jobs;
 create policy "jobs_read_open_or_own" on public.jobs for select using (
-  status = 'open' or sender_id = auth.uid()
+  status = 'open'
+  or sender_id = auth.uid()
+  or exists (
+    select 1 from public.bookings b
+    where b.job_id = jobs.id
+      and (b.sender_id = auth.uid() or b.carrier_id = auth.uid())
+  )
 );
 
 drop policy if exists "jobs_owner_insert" on public.jobs;
