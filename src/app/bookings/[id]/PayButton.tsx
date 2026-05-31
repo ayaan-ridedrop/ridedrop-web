@@ -19,21 +19,32 @@ export default function PayButton({
   async function mockPayment() {
     setSubmitting(true);
     setError(null);
-    const supabase = createClient() as any;
-    const { error: err } = await supabase
-      .from('bookings')
-      .update({ stripe_payment_intent_id: `mock_${Date.now()}` })
-      .eq('id', bookingId);
+    try {
+      const supabase = createClient() as any;
+      console.log('Updating booking with mock payment...');
+      const { data, error: err } = await supabase
+        .from('bookings')
+        .update({ stripe_payment_intent_id: `mock_${Date.now()}` })
+        .eq('id', bookingId);
 
-    if (err) {
+      console.log('Update response:', { data, err });
+
+      if (err) {
+        console.error('Payment update failed:', err);
+        setSubmitting(false);
+        setError(`Failed: ${err.message}`);
+        return;
+      }
+
+      console.log('Payment update successful, refreshing...');
+      // Wait a moment then refresh to show updated state
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      router.refresh();
+    } catch (e) {
+      console.error('Mock payment error:', e);
+      setError(String(e));
       setSubmitting(false);
-      setError(err.message);
-      return;
     }
-
-    // Wait a moment then refresh to show updated state
-    await new Promise(resolve => setTimeout(resolve, 500));
-    router.refresh();
   }
 
   return (
