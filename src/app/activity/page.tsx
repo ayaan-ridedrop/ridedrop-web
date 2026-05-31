@@ -16,12 +16,19 @@ export default async function ActivityPage() {
 
   const isCarrier = profile?.role === 'carrier' || profile?.role === 'both';
 
-  // Fetch all bookings with journey departure info
+  // Fetch all bookings
   const { data: bookings } = await supabase
     .from('bookings')
-    .select('id, status, agreed_price_pence, created_at, journeys(departure_at)')
+    .select('id, status, agreed_price_pence, created_at, journey_id')
     .or(`sender_id.eq.${user.id},carrier_id.eq.${user.id}`)
     .order('created_at', { ascending: false });
+
+  // Fetch all journeys to check departure times
+  const { data: allJourneys } = await supabase
+    .from('journeys')
+    .select('id, departure_at');
+
+  const journeyMap = new Map(allJourneys?.map((j: any) => [j.id, j]) ?? []);
 
   // Fetch all jobs
   const { data: jobs } = await supabase
@@ -56,7 +63,8 @@ export default async function ActivityPage() {
 
   // Bookings (hide if journey date passed)
   bookings?.forEach((b: any) => {
-    const journeyDeparted = b.journeys && new Date(b.journeys.departure_at) < new Date();
+    const journey = journeyMap.get(b.journey_id);
+    const journeyDeparted = journey && new Date(journey.departure_at) < new Date();
     const isActive = ['accepted', 'picked_up', 'in_transit'].includes(b.status) && !journeyDeparted;
     const isPending = b.status === 'delivered' && !journeyDeparted;
     const isHistory = ['completed', 'cancelled', 'disputed'].includes(b.status) || journeyDeparted;
