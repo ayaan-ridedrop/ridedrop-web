@@ -74,7 +74,7 @@ export default async function YourJobsPage() {
         <div className="mb-10">
           <h2 className="text-2xl font-display font-bold mb-4">Matched ({matchedJobs.length})</h2>
           <ul className="space-y-3 mb-6">
-            {matchedJobs.map(j => (
+            {matchedJobs.map((j: any) => (
               <li key={j.id}>
                 <Link
                   href={`/bookings`}
@@ -99,7 +99,7 @@ export default async function YourJobsPage() {
         <div>
           <h2 className="text-2xl font-display font-bold mb-4">Completed ({completedJobs.length})</h2>
           <ul className="space-y-3">
-            {completedJobs.map(j => (
+            {completedJobs.map((j: any) => (
               <li key={j.id}>
                 <div className="bg-white border border-rail rounded-2xl p-5 opacity-60">
                   <div className="font-display font-bold">
