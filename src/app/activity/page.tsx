@@ -63,7 +63,7 @@ export default async function ActivityPage() {
 
   // Bookings (hide if journey date passed)
   bookings?.forEach((b: any) => {
-    const journey = journeyMap.get(b.journey_id);
+    const journey = journeyMap.get(b.journey_id) as any;
     const journeyDeparted = journey && new Date(journey.departure_at) < new Date();
     const isActive = ['accepted', 'picked_up', 'in_transit'].includes(b.status) && !journeyDeparted;
     const isPending = b.status === 'delivered' && !journeyDeparted;
