@@ -22,43 +22,23 @@ export default function ChatThread({
   const [sending, setSending] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
-  // Subscribe to new messages on this booking.
+  // Subscribe to new messages via Broadcast (bypasses RLS, real-time delivery)
   useEffect(() => {
     const supabase = createClient() as any;
-
-    // Set up the channel with proper subscription handling
     const channel = supabase
-      .channel(`messages:${bookingId}`, {
-        config: { broadcast: { self: true } }
+      .channel(`chat:${bookingId}`)
+      .on('broadcast', { event: 'new_message' }, ({ payload }) => {
+        const newMessage = payload.message as Message;
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === newMessage.id)) return prev;
+          return [...prev, newMessage];
+        });
       })
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `booking_id=eq.${bookingId}`,
-        },
-        (payload: any) => {
-          const newMessage = payload.new as Message;
-          console.log('[Chat] NEW MESSAGE:', newMessage);
-          setMessages((prev) => {
-            // Avoid duplicates
-            if (prev.some((m) => m.id === newMessage.id)) {
-              console.log('[Chat] Duplicate, skipping');
-              return prev;
-            }
-            console.log('[Chat] Adding message to state');
-            return [...prev, newMessage];
-          });
-        },
-      )
       .subscribe((status: string) => {
-        console.log('[Chat] Subscription status changed:', status);
+        console.log('[Chat] Broadcast subscription:', status);
       });
 
     return () => {
-      console.log('[Chat] Cleaning up subscription');
       supabase.removeChannel(channel);
     };
   }, [bookingId]);
@@ -86,19 +66,33 @@ export default function ChatThread({
     setMessages((prev) => [...prev, optimisticMessage]);
     setBody('');
 
-    // Send to server
+    // Insert into DB
     const supabase = createClient() as any;
-    const { error } = await supabase.from('messages').insert({
+    const { data: inserted, error } = await supabase.from('messages').insert({
       booking_id: bookingId,
       sender_id: currentUserId,
       body: trimmed,
-    });
+    }).select().single();
     setSending(false);
 
     if (error) {
       // If error, remove optimistic message
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
       alert('Failed to send message');
+      return;
+    }
+
+    // Replace optimistic message with real one and broadcast to other user
+    if (inserted) {
+      const channel = supabase.channel(`chat:${bookingId}`);
+      await channel.send({
+        type: 'broadcast',
+        event: 'new_message',
+        payload: { message: inserted }
+      });
+
+      // Replace optimistic with real message
+      setMessages((prev) => prev.map((m) => m.id === tempId ? inserted : m));
     }
   }
 
