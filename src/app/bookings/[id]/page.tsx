@@ -25,41 +25,42 @@ export default async function BookingDetailPage({
     .eq('id', user.id)
     .maybeSingle();
 
-  // Fetch the booking with the related job, journey, and the two parties' profiles.
+  // Fetch booking first (this should always work due to RLS)
   const { data: booking } = await supabase
     .from('bookings')
-    .select(`
-      *,
-      jobs!inner(from_station, to_station, package_description, package_size, package_weight_kg, must_arrive_by, declared_value_pence),
-      journeys!inner(departure_at, arrival_at, train_operator, train_number),
-      sender:profiles!bookings_sender_id_fkey(first_name, last_name, avatar_url),
-      carrier:profiles!bookings_carrier_id_fkey(first_name, last_name, avatar_url)
-    `)
+    .select('*')
     .eq('id', params.id)
     .maybeSingle();
 
   if (!booking) notFound();
 
-  const b = booking as any;
-  const youAreSender = b.sender_id === user.id;
-  const youAreCarrier = b.carrier_id === user.id;
+  // Fetch related data separately to avoid RLS issues with inner joins
+  const [{ data: job }, { data: journey }, { data: sender }, { data: carrier }] = await Promise.all([
+    supabase.from('jobs').select('*').eq('id', booking.job_id).single(),
+    supabase.from('journeys').select('*').eq('id', booking.journey_id).single(),
+    supabase.from('profiles').select('*').eq('id', booking.sender_id).single(),
+    supabase.from('profiles').select('*').eq('id', booking.carrier_id).single(),
+  ]);
+
+  const youAreSender = booking.sender_id === user.id;
+  const youAreCarrier = booking.carrier_id === user.id;
   if (!youAreSender && !youAreCarrier) notFound();
 
-  const other = youAreSender ? b.carrier : b.sender;
+  const other = youAreSender ? carrier : sender;
   const otherName = `${other?.first_name ?? ''} ${other?.last_name?.[0] ?? ''}.`.trim();
 
   // Fetch existing chat messages.
   const { data: messages } = await supabase
     .from('messages')
     .select('*')
-    .eq('booking_id', b.id)
+    .eq('booking_id', booking.id)
     .order('created_at', { ascending: true });
 
   // Has the current user already left a review?
   const { data: existingReview } = await supabase
     .from('reviews')
     .select('id')
-    .eq('booking_id', b.id)
+    .eq('booking_id', booking.id)
     .eq('reviewer_id', user.id)
     .maybeSingle();
 
@@ -71,8 +72,8 @@ export default async function BookingDetailPage({
       .createSignedUrl(path, 60 * 60);
     return data?.signedUrl ?? null;
   }
-  const pickupUrl = await signed(b.pickup_photo_url);
-  const deliveryUrl = await signed(b.delivery_photo_url);
+  const pickupUrl = await signed(booking.pickup_photo_url);
+  const deliveryUrl = await signed(booking.delivery_photo_url);
 
   const STAGES = [
     { key: 'accepted', label: 'Accepted' },
@@ -81,7 +82,7 @@ export default async function BookingDetailPage({
     { key: 'delivered', label: 'Delivered' },
     { key: 'completed', label: 'Completed' },
   ] as const;
-  const currentStageIdx = STAGES.findIndex((s) => s.key === b.status);
+  const currentStageIdx = STAGES.findIndex((s) => s.key === booking.status);
 
   return (
     <AppShell user={{ email: user.email!, firstName: profile?.first_name }}>
@@ -89,9 +90,9 @@ export default async function BookingDetailPage({
         ← All bookings
       </Link>
       <h1 className="text-4xl mt-4 mb-1">
-        {b.jobs.from_station} → {b.jobs.to_station}
+        {job?.from_station} → {job?.to_station}
       </h1>
-      <p className="text-ink-soft mb-6 font-light">{b.jobs.package_description}</p>
+      <p className="text-ink-soft mb-6 font-light">{job?.package_description}</p>
 
       {/* PROGRESS TRACK */}
       <div className="mb-8">
@@ -100,7 +101,7 @@ export default async function BookingDetailPage({
             <div key={s.key} className="flex-1">
               <div
                 className={`h-2 rounded-full ${
-                  b.status === 'disputed'
+                  booking.status === 'disputed'
                     ? 'bg-red-300'
                     : i <= currentStageIdx
                       ? 'bg-accent'
@@ -113,7 +114,7 @@ export default async function BookingDetailPage({
             </div>
           ))}
         </div>
-        {b.status === 'disputed' && (
+        {booking.status === 'disputed' && (
           <p className="text-sm text-red-700 mt-3">
             ⚠ This booking is under dispute. Funds are frozen.
           </p>
@@ -146,45 +147,45 @@ export default async function BookingDetailPage({
           <div className="bg-white border border-rail rounded-2xl p-5 space-y-3 text-sm">
             <Row label={youAreSender ? 'Carrier' : 'Sender'}>{otherName}</Row>
             <Row label="Train">
-              {new Date(b.journeys.departure_at).toLocaleString('en-GB')}
-              {b.journeys.train_operator ? ` · ${b.journeys.train_operator}` : ''}
+              {new Date(journey?.departure_at ?? '').toLocaleString('en-GB')}
+              {journey?.train_operator ? ` · ${journey.train_operator}` : ''}
             </Row>
             <Row label="Arrival">
-              {new Date(b.journeys.arrival_at).toLocaleString('en-GB')}
+              {new Date(journey?.arrival_at ?? '').toLocaleString('en-GB')}
             </Row>
             <Row label="Agreed price">
-              £{(b.agreed_price_pence / 100).toFixed(2)}
+              £{(booking.agreed_price_pence / 100).toFixed(2)}
             </Row>
             {youAreCarrier && (
               <Row label="You earn (after 20%)">
-                £{((b.agreed_price_pence - b.commission_pence) / 100).toFixed(2)}
+                £{((booking.agreed_price_pence - booking.commission_pence) / 100).toFixed(2)}
               </Row>
             )}
-            <Row label="Package size">{b.jobs.package_size}</Row>
-            {b.jobs.declared_value_pence > 0 && (
+            <Row label="Package size">{job?.package_size}</Row>
+            {job && job.declared_value_pence > 0 && (
               <Row label="Declared value">
-                £{(b.jobs.declared_value_pence / 100).toFixed(2)}
+                £{(job.declared_value_pence / 100).toFixed(2)}
               </Row>
             )}
           </div>
 
           {/* PAY (sender, while accepted + unpaid) */}
-          {youAreSender && b.status === 'accepted' && !b.stripe_payment_intent_id && (
-            <PayButton bookingId={b.id} priceGbp={b.agreed_price_pence / 100} />
+          {youAreSender && booking.status === 'accepted' && !booking.stripe_payment_intent_id && (
+            <PayButton bookingId={booking.id} priceGbp={booking.agreed_price_pence / 100} />
           )}
-          {youAreSender && b.stripe_payment_intent_id && (
+          {youAreSender && booking.stripe_payment_intent_id && (
             <div className="bg-accent-light border border-accent-mid rounded-2xl px-5 py-3 text-sm text-accent">
               Paid - funds held in escrow until delivery confirmed
             </div>
           )}
-          {youAreCarrier && !b.stripe_payment_intent_id && b.status === 'accepted' && (
+          {youAreCarrier && !booking.stripe_payment_intent_id && booking.status === 'accepted' && (
             <div className="bg-amber-50 border border-amber-300 rounded-2xl px-5 py-3 text-sm text-amber-900">
               Waiting for the sender to pay before you collect.
             </div>
           )}
 
           {/* PINs */}
-          {b.stripe_payment_intent_id && ['accepted', 'picked_up', 'in_transit'].includes(b.status) && (
+          {booking.stripe_payment_intent_id && ['accepted', 'picked_up', 'in_transit'].includes(booking.status) && (
             <div className="bg-accent-light/40 border border-accent-light rounded-2xl p-5">
               <h3 className="font-display font-bold text-lg mb-3">
                 Handoff PINs
@@ -193,22 +194,22 @@ export default async function BookingDetailPage({
                 <>
                   <PinDisplay
                     label="Pickup PIN — read this to the carrier"
-                    pin={b.pickup_pin}
-                    used={b.status !== 'accepted'}
+                    pin={booking.pickup_pin}
+                    used={booking.status !== 'accepted'}
                   />
                   <PinDisplay
                     label="Delivery PIN — give this to your recipient"
-                    pin={b.delivery_pin}
-                    used={b.status === 'delivered' || b.status === 'completed'}
+                    pin={booking.delivery_pin}
+                    used={booking.status === 'delivered' || booking.status === 'completed'}
                   />
                 </>
               ) : (
                 <>
-                  {b.status === 'accepted' && (
-                    <PinVerify bookingId={b.id} kind="pickup" />
+                  {booking.status === 'accepted' && (
+                    <PinVerify bookingId={booking.id} kind="pickup" />
                   )}
-                  {['picked_up', 'in_transit'].includes(b.status) && (
-                    <PinVerify bookingId={b.id} kind="delivery" />
+                  {['picked_up', 'in_transit'].includes(booking.status) && (
+                    <PinVerify bookingId={booking.id} kind="delivery" />
                   )}
                 </>
               )}
@@ -216,13 +217,13 @@ export default async function BookingDetailPage({
           )}
 
           {/* PHOTOS (carrier-uploaded) */}
-          {youAreCarrier && b.status !== 'completed' && b.status !== 'cancelled' && (
+          {youAreCarrier && booking.status !== 'completed' && booking.status !== 'cancelled' && (
             <>
-              {['accepted', 'picked_up'].includes(b.status) && (
-                <PhotoUpload bookingId={b.id} kind="pickup" existingUrl={pickupUrl} />
+              {['accepted', 'picked_up'].includes(booking.status) && (
+                <PhotoUpload bookingId={booking.id} kind="pickup" existingUrl={pickupUrl} />
               )}
-              {['picked_up', 'in_transit', 'delivered'].includes(b.status) && (
-                <PhotoUpload bookingId={b.id} kind="delivery" existingUrl={deliveryUrl} />
+              {['picked_up', 'in_transit', 'delivered'].includes(booking.status) && (
+                <PhotoUpload bookingId={booking.id} kind="delivery" existingUrl={deliveryUrl} />
               )}
             </>
           )}
@@ -235,28 +236,28 @@ export default async function BookingDetailPage({
           )}
 
           {/* CONFIRM DELIVERY (sender, while in 'delivered') */}
-          {youAreSender && b.status === 'delivered' && (
+          {youAreSender && booking.status === 'delivered' && (
             <ConfirmDeliveryButton
-              bookingId={b.id}
-              autoReleaseAt={b.auto_release_at}
+              bookingId={booking.id}
+              autoReleaseAt={booking.auto_release_at}
             />
           )}
 
           {/* REVIEW (after completed) */}
-          {(b.status === 'completed' || b.status === 'delivered') && !existingReview && (
-            <ReviewForm bookingId={b.id} subjectName={otherName} />
+          {(booking.status === 'completed' || booking.status === 'delivered') && !existingReview && (
+            <ReviewForm bookingId={booking.id} subjectName={otherName} />
           )}
 
           {/* DISPUTE (while active and not already disputed/completed) */}
-          {!['completed', 'cancelled', 'disputed'].includes(b.status) && (
-            <DisputeForm bookingId={b.id} />
+          {!['completed', 'cancelled', 'disputed'].includes(booking.status) && (
+            <DisputeForm bookingId={booking.id} />
           )}
         </div>
 
         {/* CHAT */}
         <div>
           <ChatThread
-            bookingId={b.id}
+            bookingId={booking.id}
             currentUserId={user.id}
             initialMessages={messages ?? []}
             otherName={otherName}
