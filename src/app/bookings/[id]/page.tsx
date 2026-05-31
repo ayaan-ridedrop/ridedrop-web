@@ -192,7 +192,7 @@ export default async function BookingDetailPage({
             </div>
           )}
 
-          {/* PINs */}
+          {/* PINs FIRST */}
           {['accepted', 'picked_up', 'in_transit', 'delivered'].includes(booking.status) && (
             <div className="bg-accent-light/40 border border-accent-light rounded-2xl p-5">
               <h3 className="font-display font-bold text-lg mb-3">
@@ -224,7 +224,7 @@ export default async function BookingDetailPage({
             </div>
           )}
 
-          {/* PHOTOS (carrier-uploaded) */}
+          {/* PHOTOS SECOND (optional) */}
           {youAreCarrier && booking.status !== 'completed' && booking.status !== 'cancelled' && (
             <>
               {['accepted', 'picked_up'].includes(booking.status) && (
