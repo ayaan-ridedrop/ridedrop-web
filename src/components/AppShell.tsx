@@ -23,7 +23,9 @@ export default function AppShell({
             <Link href="/dashboard" className="hover:text-ink">Home</Link>
             <Link href="/send" className="hover:text-ink">Send</Link>
             <Link href="/jobs/browse" className="hover:text-ink">Find jobs</Link>
-            <Link href="/journeys/new" className="hover:text-ink">List a journey</Link>
+            <Link href="/jobs/your-jobs" className="hover:text-ink">Your jobs</Link>
+            <Link href="/journeys/new" className="hover:text-ink">List journey</Link>
+            <Link href="/journeys/your-journeys" className="hover:text-ink">Your journeys</Link>
             <Link href="/bookings" className="hover:text-ink">Bookings</Link>
             <Link href="/earnings" className="hover:text-ink">Earnings</Link>
             <Link href="/notifications" className="hover:text-ink" aria-label="Activity">🔔</Link>
