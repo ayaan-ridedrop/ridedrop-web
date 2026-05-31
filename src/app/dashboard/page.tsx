@@ -1,16 +1,13 @@
-// /dashboard — landing for any logged-in user.
-// Pulls the user's recent jobs, journeys, and bookings from Supabase.
+// /dashboard — landing for logged-in users.
+// Shows: active bookings + recent matched jobs/journeys (last 48h only)
 
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
-import CancelJobButton from '@/app/send/CancelJobButton';
-import CancelJourneyButton from '@/app/journeys/new/CancelJourneyButton';
-import type { DashboardJob, DashboardJourney, DashboardBooking } from '@/lib/types';
 
 export default async function DashboardPage() {
-  const supabase  = createClient() as any;
+  const supabase = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
@@ -22,36 +19,63 @@ export default async function DashboardPage() {
 
   const isCarrier = profile?.role === 'carrier' || profile?.role === 'both';
 
-  // Last 5 of everything that matters.
-  const [{ data: recentJobs }, { data: recentJourneys }, { data: activeBookings }] =
-    await Promise.all<[
-      { data: DashboardJob[] | null },
-      { data: DashboardJourney[] | null },
-      { data: DashboardBooking[] | null }
-    ]>([
-      supabase
-        .from('jobs')
-        .select('id, from_station, to_station, status, max_budget_pence, created_at')
-        .eq('sender_id', user.id)
-        .neq('status', 'cancelled')
-        .order('created_at', { ascending: false })
-        .limit(5),
-      isCarrier
-        ? supabase
-            .from('journeys')
-            .select('id, from_station, to_station, departure_at, status')
-            .eq('carrier_id', user.id)
-            .neq('status', 'cancelled')
-            .order('departure_at', { ascending: false })
-            .limit(5)
-        : Promise.resolve({ data: [] as any[] }),
-      supabase
-        .from('bookings')
-        .select('id, status, agreed_price_pence, job_id, journey_id')
-        .or(`sender_id.eq.${user.id},carrier_id.eq.${user.id}`)
-        .in('status', ['accepted', 'picked_up', 'in_transit', 'delivered'])
-        .limit(5),
-    ]);
+  // Get 48h cutoff
+  const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+
+  // Fetch active bookings
+  const { data: bookings } = await supabase
+    .from('bookings')
+    .select('id, status, agreed_price_pence, created_at')
+    .or(`sender_id.eq.${user.id},carrier_id.eq.${user.id}`)
+    .in('status', ['accepted', 'picked_up', 'in_transit', 'delivered'])
+    .order('created_at', { ascending: false });
+
+  // Fetch recent matched jobs (last 48h)
+  const { data: recentJobs } = await supabase
+    .from('jobs')
+    .select('id, from_station, to_station, status, max_budget_pence, created_at')
+    .eq('sender_id', user.id)
+    .eq('status', 'matched')
+    .gte('created_at', fortyEightHoursAgo)
+    .order('created_at', { ascending: false });
+
+  // Fetch recent journeys (last 48h, carriers only)
+  const recentJourneys = isCarrier
+    ? (
+        await supabase
+          .from('journeys')
+          .select('id, from_station, to_station, departure_at, status, created_at')
+          .eq('carrier_id', user.id)
+          .neq('status', 'cancelled')
+          .gte('created_at', fortyEightHoursAgo)
+          .order('departure_at', { ascending: false })
+      ).data
+    : [];
+
+  // Combine active items
+  const activeItems = [
+    ...(bookings?.map((b) => ({
+      type: 'booking',
+      id: b.id,
+      title: `Booking · ${b.status}`,
+      price: b.agreed_price_pence / 100,
+      createdAt: b.created_at,
+    })) ?? []),
+    ...(recentJobs?.map((j) => ({
+      type: 'job',
+      id: j.id,
+      title: `${j.from_station} → ${j.to_station} (matched)`,
+      price: j.max_budget_pence / 100,
+      createdAt: j.created_at,
+    })) ?? []),
+    ...(recentJourneys?.map((j) => ({
+      type: 'journey',
+      id: j.id,
+      title: `${j.from_station} → ${j.to_station}`,
+      price: null,
+      createdAt: j.created_at,
+    })) ?? []),
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (
     <AppShell user={{ email: user.email!, firstName: profile?.first_name }}>
@@ -102,113 +126,61 @@ export default async function DashboardPage() {
         )}
       </div>
 
-      {/* ACTIVE */}
-      {activeBookings && activeBookings.length > 0 && (
+      {/* ACTIVE SECTION (consolidated) */}
+      {activeItems.length > 0 && (
         <section className="mb-10">
-          <h2 className="text-xl mb-4">Active deliveries</h2>
+          <h2 className="text-xl mb-4">Active</h2>
           <ul className="space-y-2">
-            {activeBookings.map((b) => (
+            {activeItems.map((item) => (
               <li
-                key={b.id}
+                key={`${item.type}-${item.id}`}
                 className="bg-white border border-rail rounded-xl px-5 py-4 flex items-center justify-between hover:border-accent transition"
               >
                 <Link
-                  href={`/bookings/${b.id}`}
+                  href={
+                    item.type === 'booking'
+                      ? `/bookings/${item.id}`
+                      : item.type === 'job'
+                        ? `/jobs/your-jobs`
+                        : `/journeys/your-journeys`
+                  }
                   className="flex-1 text-sm hover:text-accent"
                 >
-                  Booking · {b.status}
+                  {item.title}
                 </Link>
-                <span className="font-display font-bold">
-                  £{(b.agreed_price_pence / 100).toFixed(2)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* RECENT JOBS */}
-      <section className="mb-10">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl">Your jobs</h2>
-          <Link href="/send" className="text-sm text-accent underline">
-            Post a new one →
-          </Link>
-        </div>
-        {!recentJobs?.length ? (
-          <p className="text-ink-muted text-sm font-light">
-            No jobs yet. Post your first delivery.
-          </p>
-        ) : (
-          <ul className="space-y-2">
-            {recentJobs.map((j) => (
-              <li
-                key={j.id}
-                className="bg-white border border-rail rounded-xl px-5 py-4 flex items-center justify-between"
-              >
-                <div className="flex-1">
-                  <div className="font-medium">
-                    {j.from_station} → {j.to_station}
-                  </div>
-                  <div className="text-xs text-ink-muted uppercase tracking-wider">
-                    {j.status}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="font-display font-bold block mb-3">
-                    £{(j.max_budget_pence / 100).toFixed(0)}
+                {item.price !== null && (
+                  <span className="font-display font-bold ml-4">
+                    £{item.price.toFixed(2)}
                   </span>
-                  {j.status === 'open' ? (
-                    <CancelJobButton jobId={j.id} />
-                  ) : (
-                    <span className="text-xs text-ink-muted">{j.status}</span>
-                  )}
-                </div>
+                )}
               </li>
             ))}
           </ul>
-        )}
-      </section>
-
-      {/* RECENT JOURNEYS (carriers only) */}
-      {isCarrier && (
-        <section>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl">Your journeys</h2>
-            <Link href="/journeys/new" className="text-sm text-accent underline">
-              List a new one →
-            </Link>
-          </div>
-          {!recentJourneys?.length ? (
-            <p className="text-ink-muted text-sm font-light">
-              You haven't listed any journeys yet.
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {recentJourneys.map((j) => (
-                <li
-                  key={j.id}
-                  className="bg-white border border-rail rounded-xl px-5 py-4 flex items-center justify-between"
-                >
-                  <div className="flex-1">
-                    <div className="font-medium">
-                      {j.from_station} → {j.to_station}
-                    </div>
-                    <div className="text-xs text-ink-muted">
-                      {new Date(j.departure_at).toLocaleString('en-GB')} · {j.status}
-                    </div>
-                  </div>
-                  {j.status === 'ticket_pending' && (
-                    <div className="ml-4">
-                      <CancelJourneyButton journeyId={j.id} />
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
         </section>
       )}
+
+      {activeItems.length === 0 && (
+        <section className="mb-10">
+          <p className="text-ink-soft text-sm font-light">
+            No active deliveries. {!isCarrier ? 'Post a job' : 'Accept a job'} to get started.
+          </p>
+        </section>
+      )}
+
+      {/* HISTORY LINKS */}
+      <section className="space-y-2 text-sm">
+        <Link href="/jobs/your-jobs" className="block text-accent hover:underline">
+          → View all your jobs
+        </Link>
+        {isCarrier && (
+          <Link href="/journeys/your-journeys" className="block text-accent hover:underline">
+            → View all your journeys
+          </Link>
+        )}
+        <Link href="/bookings" className="block text-accent hover:underline">
+          → View all bookings
+        </Link>
+      </section>
     </AppShell>
   );
 }
