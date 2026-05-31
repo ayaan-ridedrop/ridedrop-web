@@ -23,9 +23,9 @@ export default async function YourJobsPage() {
     .neq('status', 'cancelled')
     .order('created_at', { ascending: false });
 
-  const openJobs = jobs?.filter(j => j.status === 'open') ?? [];
-  const matchedJobs = jobs?.filter(j => j.status === 'matched') ?? [];
-  const completedJobs = jobs?.filter(j => j.status === 'completed') ?? [];
+  const openJobs = jobs?.filter((j: any) => j.status === 'open') ?? [];
+  const matchedJobs = jobs?.filter((j: any) => j.status === 'matched') ?? [];
+  const completedJobs = jobs?.filter((j: any) => j.status === 'completed') ?? [];
 
   return (
     <AppShell user={{ email: user.email!, firstName: profile?.first_name }}>

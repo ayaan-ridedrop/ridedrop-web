@@ -23,10 +23,10 @@ export default async function YourJourneysPage() {
     .neq('status', 'cancelled')
     .order('departure_at', { ascending: true });
 
-  const listedJourneys = journeys?.filter(j => j.status === 'listed') ?? [];
-  const pendingJourneys = journeys?.filter(j => j.status === 'ticket_pending') ?? [];
-  const fullJourneys = journeys?.filter(j => j.status === 'full') ?? [];
-  const pastJourneys = journeys?.filter(j => new Date(j.departure_at) < new Date()) ?? [];
+  const listedJourneys = journeys?.filter((j: any) => j.status === 'listed') ?? [];
+  const pendingJourneys = journeys?.filter((j: any) => j.status === 'ticket_pending') ?? [];
+  const fullJourneys = journeys?.filter((j: any) => j.status === 'full') ?? [];
+  const pastJourneys = journeys?.filter((j: any) => new Date(j.departure_at) < new Date()) ?? [];
 
   return (
     <AppShell user={{ email: user.email!, firstName: profile?.first_name }}>
