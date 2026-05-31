@@ -337,6 +337,11 @@ create policy "messages_participants_insert" on public.messages for insert with 
     where b.id = booking_id
       and (b.sender_id = auth.uid() or b.carrier_id = auth.uid())
   )
+  or exists (
+    select 1 from public.bookings b
+    where b.id = booking_id
+      and b.carrier_id = auth.uid()
+  )
 );
 
 -- reviews: public read, write only by booking participants
