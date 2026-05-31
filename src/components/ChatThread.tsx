@@ -25,8 +25,12 @@ export default function ChatThread({
   // Subscribe to new messages on this booking.
   useEffect(() => {
     const supabase = createClient() as any;
+
+    // Set up the channel with proper subscription handling
     const channel = supabase
-      .channel(`messages:${bookingId}`)
+      .channel(`messages:${bookingId}`, {
+        config: { broadcast: { self: true } }
+      })
       .on(
         'postgres_changes',
         {
@@ -35,22 +39,27 @@ export default function ChatThread({
           table: 'messages',
           filter: `booking_id=eq.${bookingId}`,
         },
-        (payload: { new: Message }) => {
-          console.log('[Chat] Received message from Realtime:', payload.new);
+        (payload: any) => {
+          const newMessage = payload.new as Message;
+          console.log('[Chat] NEW MESSAGE:', newMessage);
           setMessages((prev) => {
-            const next = payload.new;
-            if (prev.some((m) => m.id === next.id)) return prev;
-            return [...prev, next];
+            // Avoid duplicates
+            if (prev.some((m) => m.id === newMessage.id)) {
+              console.log('[Chat] Duplicate, skipping');
+              return prev;
+            }
+            console.log('[Chat] Adding message to state');
+            return [...prev, newMessage];
           });
         },
       )
       .subscribe((status: string) => {
-        console.log('[Chat] Subscription status:', status);
+        console.log('[Chat] Subscription status changed:', status);
       });
 
     return () => {
-      console.log('[Chat] Unsubscribing from channel');
-      void supabase.removeChannel(channel);
+      console.log('[Chat] Cleaning up subscription');
+      supabase.removeChannel(channel);
     };
   }, [bookingId]);
 
