@@ -224,13 +224,13 @@ export default async function BookingDetailPage({
             </div>
           )}
 
-          {/* PHOTOS SECOND (optional) */}
+          {/* PHOTOS SECOND (after PIN verified) */}
           {youAreCarrier && booking.status !== 'completed' && booking.status !== 'cancelled' && (
             <>
-              {['accepted', 'picked_up'].includes(booking.status) && (
+              {booking.status === 'picked_up' && (
                 <PhotoUpload bookingId={booking.id} kind="pickup" existingUrl={pickupUrl} />
               )}
-              {['picked_up', 'in_transit', 'delivered'].includes(booking.status) && (
+              {booking.status === 'delivered' && (
                 <PhotoUpload bookingId={booking.id} kind="delivery" existingUrl={deliveryUrl} />
               )}
             </>
