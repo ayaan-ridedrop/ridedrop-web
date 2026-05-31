@@ -54,28 +54,28 @@ export default async function DashboardPage() {
 
   // Combine active items
   const activeItems = [
-    ...(bookings?.map((b) => ({
+    ...(bookings?.map((b: any) => ({
       type: 'booking',
       id: b.id,
       title: `Booking · ${b.status}`,
       price: b.agreed_price_pence / 100,
       createdAt: b.created_at,
     })) ?? []),
-    ...(recentJobs?.map((j) => ({
+    ...(recentJobs?.map((j: any) => ({
       type: 'job',
       id: j.id,
       title: `${j.from_station} → ${j.to_station} (matched)`,
       price: j.max_budget_pence / 100,
       createdAt: j.created_at,
     })) ?? []),
-    ...(recentJourneys?.map((j) => ({
+    ...(recentJourneys?.map((j: any) => ({
       type: 'journey',
       id: j.id,
       title: `${j.from_station} → ${j.to_station}`,
       price: null,
       createdAt: j.created_at,
     })) ?? []),
-  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  ].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (
     <AppShell user={{ email: user.email!, firstName: profile?.first_name }}>
