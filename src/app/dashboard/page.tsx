@@ -22,13 +22,20 @@ export default async function DashboardPage() {
   // Get 48h cutoff
   const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
 
-  // Fetch active bookings
+  // Fetch active bookings with journey info
   const { data: bookings } = await supabase
     .from('bookings')
-    .select('id, status, agreed_price_pence, created_at')
+    .select('id, status, agreed_price_pence, created_at, journey_id')
     .or(`sender_id.eq.${user.id},carrier_id.eq.${user.id}`)
     .in('status', ['accepted', 'picked_up', 'in_transit', 'delivered'])
     .order('created_at', { ascending: false });
+
+  // Fetch journeys to check departure times
+  const { data: allJourneys } = await supabase
+    .from('journeys')
+    .select('id, departure_at');
+
+  const journeyMap = new Map(allJourneys?.map((j: any) => [j.id, j]) ?? []);
 
   // Fetch recent matched jobs (last 48h)
   const { data: recentJobs } = await supabase
@@ -52,15 +59,21 @@ export default async function DashboardPage() {
       ).data
     : [];
 
-  // Combine active items
+  // Combine active items (filter out old bookings where journey has departed)
   const activeItems = [
-    ...(bookings?.map((b: any) => ({
-      type: 'booking',
-      id: b.id,
-      title: `Booking · ${b.status}`,
-      price: b.agreed_price_pence / 100,
-      createdAt: b.created_at,
-    })) ?? []),
+    ...(bookings
+      ?.filter((b: any) => {
+        const journey = journeyMap.get(b.journey_id) as any;
+        if (!journey) return true; // Keep if no journey found
+        return new Date(journey.departure_at) >= new Date(); // Keep only if journey hasn't departed
+      })
+      .map((b: any) => ({
+        type: 'booking',
+        id: b.id,
+        title: `Booking · ${b.status}`,
+        price: b.agreed_price_pence / 100,
+        createdAt: b.created_at,
+      })) ?? []),
     ...(recentJobs?.map((j: any) => ({
       type: 'job',
       id: j.id,
