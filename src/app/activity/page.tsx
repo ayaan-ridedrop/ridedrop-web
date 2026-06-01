@@ -33,7 +33,7 @@ export default async function ActivityPage() {
   // Fetch all jobs
   const { data: jobs } = await supabase
     .from('jobs')
-    .select('id, from_station, to_station, status, max_budget_pence, deadline_at, created_at')
+    .select('id, from_station, to_station, status, deadline_at, created_at')
     .eq('sender_id', user.id)
     .order('created_at', { ascending: false });
 

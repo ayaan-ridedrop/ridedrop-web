@@ -40,7 +40,7 @@ export default async function DashboardPage() {
   // Fetch recent matched jobs (last 48h)
   const { data: recentJobs } = await supabase
     .from('jobs')
-    .select('id, from_station, to_station, status, max_budget_pence, created_at')
+    .select('id, from_station, to_station, status, created_at')
     .eq('sender_id', user.id)
     .eq('status', 'matched')
     .gte('created_at', fortyEightHoursAgo)

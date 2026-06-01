@@ -25,18 +25,15 @@ export async function submitBid(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Not signed in' };
 
-  // Fetch the job to check it's still open and verify max_budget
+  // Fetch the job to check it's still open
   const { data: job } = await supabase
     .from('jobs')
-    .select('id, max_budget_pence, status')
+    .select('id, status')
     .eq('id', parsed.data.jobId)
     .maybeSingle();
 
   if (!job) return { error: 'Job not found' };
   if (job.status !== 'open') return { error: 'Job is no longer open' };
-  if (parsed.data.amountPence > job.max_budget_pence) {
-    return { error: `Bid exceeds max budget of £${(job.max_budget_pence / 100).toFixed(2)}` };
-  }
 
   // Verify the journey belongs to this carrier and is listed
   const { data: journey } = await supabase

@@ -18,7 +18,7 @@ export default async function YourJobsPage() {
 
   const { data: jobs } = await supabase
     .from('jobs')
-    .select('id, from_station, to_station, package_description, package_size, max_budget_pence, must_arrive_by, status, created_at')
+    .select('id, from_station, to_station, package_description, package_size, must_arrive_by, status, created_at')
     .eq('sender_id', user.id)
     .neq('status', 'cancelled')
     .order('created_at', { ascending: false });

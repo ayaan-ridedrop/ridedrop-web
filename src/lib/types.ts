@@ -104,7 +104,6 @@ export interface Job {
   package_weight_kg: number | null;
   declared_value_pence: number;
   declaration_accepted: boolean;
-  max_budget_pence: number;
   status: JobStatus;
   created_at: string;
   updated_at: string;
@@ -216,14 +215,14 @@ export const UK_STATIONS = [
 ] as const;
 
 // ── Partial types for dashboard and list views ──
-export interface DashboardJob extends Pick<Job, 'id' | 'from_station' | 'to_station' | 'status' | 'max_budget_pence' | 'created_at'> {}
+export interface DashboardJob extends Pick<Job, 'id' | 'from_station' | 'to_station' | 'status' | 'created_at'> {}
 
 export interface DashboardJourney extends Pick<Journey, 'id' | 'from_station' | 'to_station' | 'departure_at' | 'status'> {}
 
 export interface DashboardBooking extends Pick<Booking, 'id' | 'status' | 'agreed_price_pence' | 'job_id' | 'journey_id'> {}
 
 // Browse page partial types
-export interface BrowseJob extends Pick<Job, 'id' | 'from_station' | 'to_station' | 'package_description' | 'package_size' | 'max_budget_pence' | 'must_arrive_by' | 'created_at'> {}
+export interface BrowseJob extends Pick<Job, 'id' | 'from_station' | 'to_station' | 'package_description' | 'package_size' | 'must_arrive_by' | 'created_at'> {}
 
 export interface BrowseJourney extends Pick<Journey, 'id' | 'from_station' | 'to_station' | 'departure_at' | 'arrival_at' | 'train_operator' | 'minimum_price_pence' | 'slots_remaining' | 'carrier_id'> {}
 

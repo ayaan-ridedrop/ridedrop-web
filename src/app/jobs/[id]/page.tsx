@@ -87,9 +87,6 @@ export default async function JobDetailPage({ params }: { params: { id: string }
 
           {/* Job details */}
           <div className="bg-white border border-rail rounded-2xl p-5 space-y-3 text-sm mb-6">
-            <Row label="Max budget">
-              £{(job.max_budget_pence / 100).toFixed(2)}
-            </Row>
             <Row label="Package size">{job.package_size}</Row>
             <Row label="Status">{job.status}</Row>
             {job.package_weight_kg && (
@@ -104,7 +101,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
 
           {/* If you're NOT the owner and the job is open, show bid form */}
           {!youAreOwner && job.status === 'open' && (
-            <BidForm jobId={job.id} maxBudgetPence={job.max_budget_pence} journeys={myJourneys} />
+            <BidForm jobId={job.id} journeys={myJourneys} />
           )}
 
           {!youAreOwner && job.status !== 'open' && (

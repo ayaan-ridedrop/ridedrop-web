@@ -34,7 +34,7 @@ export default async function JourneyDetailPage({
   // Get sender's open jobs for this route
   const { data: senderJobs } = await supabase
     .from('jobs')
-    .select('id, package_description, package_size, max_budget_pence, must_arrive_by, status')
+    .select('id, package_description, package_size, must_arrive_by, status')
     .eq('sender_id', user.id)
     .eq('from_station', journey.from_station)
     .eq('to_station', journey.to_station)

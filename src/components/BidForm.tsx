@@ -5,11 +5,9 @@ import { submitBid } from '@/lib/actions/submit-bid';
 
 export default function BidForm({
   jobId,
-  maxBudgetPence,
   journeys,
 }: {
   jobId: string;
-  maxBudgetPence: number;
   journeys: Array<{ id: string; from_station: string; to_station: string; departure_at: string; arrival_at: string }>;
 }) {
   const [selectedJourneyId, setSelectedJourneyId] = useState<string>('');
@@ -71,15 +69,14 @@ export default function BidForm({
             type="number"
             step="0.01"
             min="0"
-            max={(maxBudgetPence / 100).toFixed(2)}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            placeholder={`Max: £${(maxBudgetPence / 100).toFixed(2)}`}
+            placeholder="25"
             className="w-full border border-rail rounded-xl px-4 py-3 pl-7 outline-none focus:border-accent-mid"
           />
         </div>
         <p className="text-xs text-ink-soft mt-1">
-          Max budget: £{(maxBudgetPence / 100).toFixed(2)}
+          Bid any amount. The sender will choose the best offer.
         </p>
       </div>
 

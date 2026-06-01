@@ -109,7 +109,6 @@ create table if not exists public.jobs (
   package_weight_kg   numeric(5,2),
   declared_value_pence integer not null default 0,
   declaration_accepted boolean not null default false,
-  max_budget_pence    integer not null check (max_budget_pence > 0),
   status              job_status not null default 'open',
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now(),

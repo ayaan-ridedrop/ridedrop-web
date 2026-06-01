@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
-import AcceptJobButton from './AcceptJobButton';
 import type { BrowseJob } from '@/lib/types';
 
 export default async function BrowseJobsPage({
@@ -26,7 +25,7 @@ export default async function BrowseJobsPage({
 
   let q = supabase
     .from('jobs')
-    .select('id, from_station, to_station, package_description, package_size, max_budget_pence, must_arrive_by, created_at')
+    .select('id, from_station, to_station, package_description, package_size, must_arrive_by, created_at')
     .eq('status', 'open')
     .gte('must_arrive_by', new Date().toISOString())
     .order('must_arrive_by', { ascending: true })
@@ -82,11 +81,10 @@ export default async function BrowseJobsPage({
                   </div>
                 </div>
                 <div className="text-right ml-4">
-                  <div className="font-display font-extrabold text-accent text-xl mb-3">
-                    up to £{(j.max_budget_pence / 100).toFixed(0)}
-                  </div>
                   {isCarrier ? (
-                    <AcceptJobButton jobId={j.id} />
+                    <Link href={`/jobs/${j.id}`} className="text-sm text-accent underline">
+                      View & bid →
+                    </Link>
                   ) : (
                     <div className="text-xs text-ink-muted">
                       carrier keeps 80%

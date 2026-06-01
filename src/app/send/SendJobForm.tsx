@@ -26,13 +26,11 @@ export default function SendJobForm() {
     const fromStation = String(fd.get('from_station') ?? '').trim();
     const toStation = String(fd.get('to_station') ?? '').trim();
     const description = String(fd.get('package_description') ?? '').trim();
-    const budget = Number(fd.get('budget') ?? 0);
 
     if (!fromStation) errors.from_station = 'Please choose a pickup station.';
     if (!toStation) errors.to_station = 'Please choose a delivery station.';
     if (fromStation === toStation) errors.to_station = 'Pickup and delivery stations must be different.';
     if (!description) errors.package_description = 'Please describe the package.';
-    if (budget < 5) errors.budget = 'Budget must be at least £5.';
     if (!fd.get('must_arrive_by')) errors.must_arrive_by = 'Please tell us when the package needs to arrive.';
 
     if (!declaration) {
@@ -67,7 +65,6 @@ export default function SendJobForm() {
         ? Number(fd.get('weight_kg'))
         : null,
       declared_value_pence: Math.round(Number(fd.get('declared_value') ?? 0) * 100),
-      max_budget_pence: Math.round(budget * 100),
       declaration_accepted: true,
       status: 'open',
     });
@@ -175,23 +172,6 @@ export default function SendJobForm() {
         </Field>
       </div>
 
-      <Field
-        label="Your max budget (£)"
-        error={validationErrors.budget}
-      >
-        <input
-          name="budget"
-          type="number"
-          min="5"
-          required
-          placeholder="25"
-          disabled={submitting}
-          className={`w-full border rounded-xl px-4 py-3 outline-none focus:border-accent-mid disabled:opacity-50 ${
-            validationErrors.budget ? 'border-red-300' : 'border-rail'
-          }`}
-        />
-        <p className="text-xs text-ink-soft mt-1">Suggested: £5–50 depending on urgency and distance. Carriers keep 80%.</p>
-      </Field>
 
       <label className={`flex items-start gap-3 cursor-pointer rounded-xl p-4 border transition ${
         validationErrors.declaration
