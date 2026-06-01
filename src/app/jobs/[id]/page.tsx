@@ -1,125 +1,135 @@
-// /jobs/[id] — job detail view, with the carrier's accept form
 import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
-import AcceptJobForm from './AcceptJobForm';
-import { RIDEDROP_COMMISSION, type MatchingJourney } from '@/lib/types';
+import BidForm from '@/components/BidForm';
+import BidsList from '@/components/BidsList';
 
-export default async function JobDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const supabase  = createClient() as any;
+export default async function JobDetailPage({ params }: { params: { id: string } }) {
+  const supabase = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const [{ data: profile }, { data: job }] = await Promise.all([
-    supabase
-      .from('profiles')
-      .select('first_name, role')
-      .eq('id', user.id)
-      .maybeSingle(),
-    supabase
-      .from('jobs')
-      .select('*')
-      .eq('id', params.id)
-      .maybeSingle(),
-  ]);
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('first_name')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  // Fetch the job
+  const { data: job } = await supabase
+    .from('jobs')
+    .select('*')
+    .eq('id', params.id)
+    .maybeSingle();
 
   if (!job) notFound();
 
-  const isCarrier = profile?.role === 'carrier' || profile?.role === 'both';
-  const isOwnJob = job.sender_id === user.id;
+  const youAreOwner = job.sender_id === user.id;
 
-  // Find this carrier's listed journeys that match the job's route.
-  const { data: matchingJourneys } = isCarrier && !isOwnJob
-    ? (await supabase
+  // If you're the carrier, fetch your journeys
+  let myJourneys = [];
+  if (!youAreOwner) {
+    const { data: journeys } = await supabase
+      .from('journeys')
+      .select('*')
+      .eq('carrier_id', user.id)
+      .eq('status', 'listed')
+      .gt('departure_at', new Date().toISOString());
+    myJourneys = journeys || [];
+  }
+
+  // Fetch bids on this job
+  let bids: any[] = [];
+  let bidCarriers: Record<string, any> = {};
+  let bidJourneys: Record<string, any> = {};
+
+  if (youAreOwner) {
+    const { data: bidData } = await supabase
+      .from('bids')
+      .select('id, carrier_id, journey_id, amount_pence, status')
+      .eq('job_id', job.id);
+    bids = bidData || [];
+
+    if (bids.length > 0) {
+      // Fetch carrier profiles
+      const carrierIds = [...new Set(bids.map((b) => b.carrier_id))];
+      const { data: carriers } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, avatar_url')
+        .in('id', carrierIds);
+      carriers?.forEach((c) => {
+        bidCarriers[c.id] = c;
+      });
+
+      // Fetch journeys
+      const journeyIds = [...new Set(bids.map((b) => b.journey_id))];
+      const { data: journeyData } = await supabase
         .from('journeys')
-        .select('id, departure_at, train_operator, minimum_price_pence, slots_remaining')
-        .eq('carrier_id', user.id)
-        .eq('status', 'listed')
-        .eq('from_station', job.from_station)
-        .eq('to_station', job.to_station)
-        .gt('slots_remaining', 0)
-        .order('departure_at', { ascending: true }) as { data: MatchingJourney[] | null })
-    : { data: null as MatchingJourney[] | null };
+        .select('id, from_station, to_station, departure_at, arrival_at')
+        .in('id', journeyIds);
+      journeyData?.forEach((j) => {
+        bidJourneys[j.id] = j;
+      });
+    }
+  }
 
   return (
     <AppShell user={{ email: user.email!, firstName: profile?.first_name }}>
-      <Link href="/jobs/browse" className="text-sm text-accent underline">
-        ← Back to all jobs
+      <Link href="/jobs" className="text-sm text-accent underline">
+        ← All jobs
       </Link>
-      <h1 className="text-4xl mt-4 mb-2">
-        {job.from_station} → {job.to_station}
-      </h1>
-      <p className="text-ink-soft font-light mb-8">
-        {job.package_description}
-      </p>
 
-      <div className="grid md:grid-cols-2 gap-4 mb-8">
-        <Detail label="Size">{job.package_size}</Detail>
-        <Detail label="Weight">
-          {job.package_weight_kg ? `${job.package_weight_kg} kg` : '—'}
-        </Detail>
-        <Detail label="Declared value">
-          £{(job.declared_value_pence / 100).toFixed(2)}
-        </Detail>
-        <Detail label="Must arrive by">
-          {job.must_arrive_by
-            ? new Date(job.must_arrive_by).toLocaleString('en-GB')
-            : 'No deadline'}
-        </Detail>
-        <Detail label="Sender's max budget">
-          £{(job.max_budget_pence / 100).toFixed(2)}
-        </Detail>
-        <Detail label="Status">{job.status}</Detail>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div className="col-span-1">
+          <h1 className="text-4xl font-bold mb-2">{job.from_station} → {job.to_station}</h1>
+          <p className="text-lg text-ink-soft mb-6">{job.package_description}</p>
+
+          {/* Job details */}
+          <div className="bg-white border border-rail rounded-2xl p-5 space-y-3 text-sm mb-6">
+            <Row label="Max budget">
+              £{(job.max_budget_pence / 100).toFixed(2)}
+            </Row>
+            <Row label="Package size">{job.package_size}</Row>
+            <Row label="Status">{job.status}</Row>
+            {job.package_weight_kg && (
+              <Row label="Weight">{job.package_weight_kg} kg</Row>
+            )}
+            {job.declared_value_pence > 0 && (
+              <Row label="Declared value">
+                £{(job.declared_value_pence / 100).toFixed(2)}
+              </Row>
+            )}
+          </div>
+
+          {/* If you're NOT the owner and the job is open, show bid form */}
+          {!youAreOwner && job.status === 'open' && (
+            <BidForm jobId={job.id} maxBudgetPence={job.max_budget_pence} journeys={myJourneys} />
+          )}
+
+          {!youAreOwner && job.status !== 'open' && (
+            <div className="bg-cream border border-rail rounded-2xl px-5 py-3 text-sm">
+              This job is no longer open ({job.status}).
+            </div>
+          )}
+        </div>
+
+        {/* Right column: bids (only if owner) */}
+        {youAreOwner && (
+          <div className="col-span-1">
+            <BidsList jobId={job.id} bids={bids} carriers={bidCarriers} journeys={bidJourneys} />
+          </div>
+        )}
       </div>
-
-      {isOwnJob ? (
-        <div className="bg-cream border border-rail rounded-2xl p-5 text-sm">
-          This is your own job. Carriers on your route can accept it.
-        </div>
-      ) : !isCarrier ? (
-        <div className="bg-amber-50 border border-amber-300 rounded-2xl p-5 text-sm text-amber-900">
-          Switch on carrier mode in <Link href="/profile" className="underline font-medium">your profile</Link> to accept jobs.
-        </div>
-      ) : job.status !== 'open' ? (
-        <div className="bg-cream border border-rail rounded-2xl p-5 text-sm">
-          This job is no longer open ({job.status}).
-        </div>
-      ) : !matchingJourneys?.length ? (
-        <div className="bg-amber-50 border border-amber-300 rounded-2xl p-5 text-sm text-amber-900">
-          You don't have a listed journey on this route yet.{' '}
-          <Link href="/journeys/new" className="underline font-medium">
-            List one to accept this job →
-          </Link>
-        </div>
-      ) : (
-        <AcceptJobForm
-          jobId={job.id}
-          maxBudgetGbp={job.max_budget_pence / 100}
-          commissionPct={RIDEDROP_COMMISSION * 100}
-          journeys={matchingJourneys.map((j) => ({
-            id: j.id,
-            label: `${new Date(j.departure_at).toLocaleString('en-GB')}${j.train_operator ? ` · ${j.train_operator}` : ''}`,
-            minPriceGbp: j.minimum_price_pence / 100,
-            slotsRemaining: j.slots_remaining,
-          }))}
-        />
-      )}
     </AppShell>
   );
 }
 
-function Detail({ label, children }: { label: string; children: React.ReactNode }) {
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white border border-rail rounded-xl p-4">
-      <div className="text-xs text-ink-muted uppercase tracking-wider mb-1">
-        {label}
-      </div>
-      <div className="text-sm font-medium">{children}</div>
+    <div className="flex justify-between items-center border-b border-rail/60 last:border-b-0 pb-2 last:pb-0">
+      <span className="text-xs text-ink-muted uppercase tracking-wider">{label}</span>
+      <span className="text-sm font-medium text-right">{children}</span>
     </div>
   );
 }
