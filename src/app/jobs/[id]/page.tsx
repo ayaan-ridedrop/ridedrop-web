@@ -58,7 +58,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
         .from('profiles')
         .select('id, first_name, last_name, avatar_url')
         .in('id', carrierIds);
-      carriers?.forEach((c) => {
+      carriers?.forEach((c: any) => {
         bidCarriers[c.id] = c;
       });
 
@@ -68,7 +68,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
         .from('journeys')
         .select('id, from_station, to_station, departure_at, arrival_at')
         .in('id', journeyIds);
-      journeyData?.forEach((j) => {
+      journeyData?.forEach((j: any) => {
         bidJourneys[j.id] = j;
       });
     }
