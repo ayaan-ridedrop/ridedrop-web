@@ -52,7 +52,8 @@ export async function acceptBid(formData: FormData) {
       agreed_price_pence: bid.amount_pence,
       commission_pence: Math.round(bid.amount_pence * 0.2), // 20% commission
       status: 'accepted',
-    });
+    })
+    .select();
 
   if (bookingErr) return { error: bookingErr.message };
 
