@@ -27,7 +27,7 @@ export async function verifyPin(formData: FormData) {
 
   const { data: booking } = await supabase
     .from('bookings')
-    .select('id, status, carrier_id, pickup_pin, delivery_pin')
+    .select('id, status, carrier_id, pickup_pin, delivery_pin, stripe_payment_intent_id')
     .eq('id', parsed.data.bookingId)
     .maybeSingle();
 
