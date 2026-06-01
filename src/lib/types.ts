@@ -9,6 +9,7 @@ export type UserRole = 'sender' | 'carrier' | 'both';
 export type JourneyStatus =
   | 'draft'
   | 'ticket_pending'
+  | 'ticket_rejected'
   | 'listed'
   | 'full'
   | 'in_progress'

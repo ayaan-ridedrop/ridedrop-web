@@ -145,16 +145,17 @@ create table if not exists public.bookings (
   unique (job_id)               -- a job has at most one active booking
 );
 
--- ── BIDS (carrier offers on open jobs) ───────────────────────────
+-- ── BIDS (carrier offers specific journey on a job) ────────────────
 create table if not exists public.bids (
   id            uuid primary key default gen_random_uuid(),
   job_id        uuid not null references public.jobs(id) on delete cascade,
+  journey_id    uuid not null references public.journeys(id) on delete cascade,
   carrier_id    uuid not null references public.profiles(id) on delete cascade,
   amount_pence  integer not null check (amount_pence > 0),
   status        text not null default 'pending' check (status in ('pending', 'accepted', 'rejected', 'expired')),
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now(),
-  unique (job_id, carrier_id)
+  unique (job_id, carrier_id, journey_id)
 );
 
 -- ── MESSAGES (in-app chat between sender and carrier) ─────────────

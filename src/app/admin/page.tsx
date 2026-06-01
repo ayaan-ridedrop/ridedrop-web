@@ -75,7 +75,36 @@ export default async function AdminPage() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
 
-        <div className="bg-white rounded-lg shadow">
+        {/* Quick links */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <Link
+            href="/admin/verify-tickets"
+            className="bg-blue-50 border border-blue-200 rounded-lg p-4 hover:bg-blue-100 transition"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-semibold text-blue-900">Verify Train Tickets</h3>
+                <p className="text-sm text-blue-700 mt-1">Review pending carrier tickets</p>
+              </div>
+              <span className="text-2xl">🎫</span>
+            </div>
+          </Link>
+
+          <Link
+            href="#disputes"
+            className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 hover:bg-yellow-100 transition"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-semibold text-yellow-900">Resolve Disputes</h3>
+                <p className="text-sm text-yellow-700 mt-1">Handle user disputes</p>
+              </div>
+              <span className="text-2xl">⚖️</span>
+            </div>
+          </Link>
+        </div>
+
+        <div className="bg-white rounded-lg shadow" id="disputes">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold">Disputes</h2>
           </div>

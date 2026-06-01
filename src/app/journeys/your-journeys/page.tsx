@@ -18,7 +18,7 @@ export default async function YourJourneysPage() {
 
   const { data: journeys } = await supabase
     .from('journeys')
-    .select('id, from_station, to_station, departure_at, arrival_at, train_operator, minimum_price_pence, slots_remaining, status, created_at')
+    .select('id, from_station, to_station, departure_at, arrival_at, train_operator, minimum_price_pence, slots_remaining, status, notes, created_at')
     .eq('carrier_id', user.id)
     .neq('status', 'cancelled')
     .order('departure_at', { ascending: true });
@@ -26,6 +26,7 @@ export default async function YourJourneysPage() {
   const now = new Date();
   const listedJourneys = journeys?.filter((j: any) => j.status === 'listed' && new Date(j.departure_at) >= now) ?? [];
   const pendingJourneys = journeys?.filter((j: any) => j.status === 'ticket_pending' && new Date(j.departure_at) >= now) ?? [];
+  const rejectedJourneys = journeys?.filter((j: any) => j.status === 'ticket_rejected' && new Date(j.departure_at) >= now) ?? [];
   const fullJourneys = journeys?.filter((j: any) => j.status === 'full' && new Date(j.departure_at) >= now) ?? [];
   const pastJourneys = journeys?.filter((j: any) => new Date(j.departure_at) < now) ?? [];
 
@@ -87,6 +88,46 @@ export default async function YourJourneysPage() {
                     </div>
                   </div>
                   <div className="text-right ml-4">
+                    <CancelJourneyButton journeyId={j.id} />
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* TICKET REJECTED */}
+      {rejectedJourneys.length > 0 && (
+        <div className="mb-10">
+          <h2 className="text-2xl font-display font-bold mb-4">Ticket Rejected ({rejectedJourneys.length})</h2>
+          <ul className="space-y-3 mb-6">
+            {rejectedJourneys.map((j: any) => (
+              <li key={j.id}>
+                <div className="bg-red-50 border border-red-300 rounded-2xl p-5 flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="font-display font-bold">
+                      {j.from_station} → {j.to_station}
+                    </div>
+                    <div className="text-sm text-red-900">
+                      {new Date(j.departure_at).toLocaleString('en-GB')} · {j.train_operator}
+                    </div>
+                    {j.notes && (
+                      <div className="text-xs text-red-800 mt-2 bg-white p-2 rounded border border-red-200">
+                        <strong>Rejection reason:</strong> {j.notes}
+                      </div>
+                    )}
+                    <div className="text-xs text-red-800 mt-2">
+                      Please upload a new ticket or cancel this journey.
+                    </div>
+                  </div>
+                  <div className="text-right ml-4 flex flex-col gap-2">
+                    <Link
+                      href={`/journeys/${j.id}`}
+                      className="text-blue-600 hover:text-blue-800 underline text-sm"
+                    >
+                      View
+                    </Link>
                     <CancelJourneyButton journeyId={j.id} />
                   </div>
                 </div>

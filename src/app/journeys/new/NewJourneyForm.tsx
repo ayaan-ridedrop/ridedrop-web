@@ -85,12 +85,11 @@ export default function NewJourneyForm() {
       minimum_price_pence: Math.round(Number(fd.get('min_price') ?? 0) * 100),
       max_weight_kg: Number(fd.get('max_weight_kg') ?? 5),
       food_ok: fd.get('food_ok') === 'on',
-      status: 'listed', // TODO: implement proper ticket verification with admin panel - for MVP auto-approved
+      status: 'ticket_pending', // awaiting admin verification
     }).select().single();
 
     // TODO: Store ticket photo in Supabase Storage and link to journey
-    // TODO: Implement ticket verification system - review uploaded photos, confirm route matches
-    // For now, ticket is validated on form submission but storage is not implemented yet
+    // Ticket is validated on form submission but storage is not yet implemented
 
     let err = insertErr;
 
@@ -287,7 +286,7 @@ export default function NewJourneyForm() {
           </Field>
 
           <p className="text-xs text-ink-muted font-light leading-relaxed">
-            Your journey will be marked <em>pending verification</em> while we check your ticket matches this route and time. Typically verified within 2-4 hours.
+            Your journey will be <em>pending verification</em> while our team checks your ticket matches this route and time. Typically verified within 2-4 hours.
           </p>
 
           <button
