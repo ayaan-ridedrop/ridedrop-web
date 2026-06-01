@@ -10,7 +10,7 @@ export async function uploadAvatar(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Not signed in' };
 
-  // Upload to storage (user context is fine for this)
+  // Upload to storage
   const fileName = `${user.id}-${Date.now()}`;
   const { error: uploadErr } = await supabase.storage
     .from('avatars')
@@ -18,16 +18,9 @@ export async function uploadAvatar(formData: FormData) {
 
   if (uploadErr) return { error: `Upload failed: ${uploadErr.message}` };
 
-  // Update profile with avatar URL using SERVICE_ROLE to bypass RLS
+  // Update profile with avatar URL
   const avatarPath = `avatars/${fileName}`;
-
-  // Use service role key to bypass RLS
-  const serviceRole = createClient({
-    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  }) as any;
-
-  const { error: updateErr } = await serviceRole
+  const { error: updateErr } = await supabase
     .from('profiles')
     .update({ avatar_url: avatarPath })
     .eq('id', user.id);
