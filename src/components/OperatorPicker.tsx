@@ -1,15 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getTrainSchedule } from '@/lib/darwin-api';
+import { useState } from 'react';
 
 interface OperatorPickerProps {
   fromStation: string;
   toStation: string;
-  departureDate: string; // YYYY-MM-DD format
+  departureDate: string;
   onSelectOperator: (operator: string) => void;
   disabled?: boolean;
 }
+
+// Common UK train operators for testing
+const COMMON_OPERATORS = [
+  'LNER',
+  'TransPennine Express',
+  'Avanti West Coast',
+  'East Midlands Railway',
+  'Great Western Railway',
+  'Northern',
+  'South Western Railway',
+  'Southeastern',
+];
 
 export default function OperatorPicker({
   fromStation,
@@ -18,88 +29,34 @@ export default function OperatorPicker({
   onSelectOperator,
   disabled,
 }: OperatorPickerProps) {
-  const [loading, setLoading] = useState(false);
-  const [operators, setOperators] = useState<string[]>([]);
   const [selectedOperator, setSelectedOperator] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  // Load operators when stations or date change
-  useEffect(() => {
-    if (!fromStation || !toStation || fromStation === toStation || !departureDate) {
-      setOperators([]);
-      setSelectedOperator(null);
-      return;
-    }
-
-    async function fetchOperators() {
-      setLoading(true);
-      setError(null);
-      try {
-        const schedule = await getTrainSchedule(fromStation, toStation, departureDate);
-
-        // Get unique operators and sort them
-        const uniqueOperators = Array.from(
-          new Set(schedule.services.map(s => s.operator))
-        ).sort();
-
-        setOperators(uniqueOperators);
-
-        if (uniqueOperators.length === 0) {
-          setError('No train operators found for this route. Please check the stations.');
-        }
-      } catch (err) {
-        setError('Could not load train operators. Please try again.');
-        console.error('[operator picker]', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchOperators();
-  }, [fromStation, toStation, departureDate]);
+  const [customOperator, setCustomOperator] = useState('');
 
   function handleSelect(operator: string) {
     setSelectedOperator(operator);
+    setCustomOperator('');
     onSelectOperator(operator);
+  }
+
+  function handleCustomOperator() {
+    if (customOperator.trim()) {
+      setSelectedOperator(customOperator);
+      onSelectOperator(customOperator);
+    }
   }
 
   if (!fromStation || !toStation || fromStation === toStation || !departureDate) {
     return (
       <div className="text-sm text-ink-soft italic p-3 bg-gray-50 rounded-lg">
-        Select date and both stations to see available operators.
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center gap-2 text-sm text-ink-soft p-3">
-        <span className="animate-spin">⌛</span>
-        Loading operators...
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-sm text-red-600 p-3 bg-red-50 rounded-lg">
-        {error}
-      </div>
-    );
-  }
-
-  if (operators.length === 0) {
-    return (
-      <div className="text-sm text-ink-soft italic p-3 bg-gray-50 rounded-lg">
-        No operators available for this route.
+        Select date and both stations to continue.
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="grid gap-2">
-        {operators.map((operator) => (
+        {COMMON_OPERATORS.map((operator) => (
           <button
             key={operator}
             type="button"
@@ -113,14 +70,35 @@ export default function OperatorPicker({
           >
             <span className="font-medium text-sm">{operator}</span>
             {selectedOperator === operator && (
-              <span className="text-accent-mid font-medium">Selected</span>
+              <span className="text-accent-mid font-medium">✓</span>
             )}
           </button>
         ))}
       </div>
-      <p className="text-xs text-ink-soft">
-        {operators.length} operator{operators.length === 1 ? '' : 's'} available
-      </p>
+
+      <div className="border-t border-rail pt-3">
+        <label className="text-xs text-ink-muted uppercase tracking-wider font-medium mb-2 block">
+          Or enter a custom operator
+        </label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={customOperator}
+            onChange={(e) => setCustomOperator(e.target.value)}
+            placeholder="e.g., ScotRail, TfL"
+            className="flex-1 border border-rail rounded-lg px-3 py-2 text-sm outline-none focus:border-accent-mid"
+            disabled={disabled}
+          />
+          <button
+            type="button"
+            onClick={handleCustomOperator}
+            disabled={!customOperator.trim() || disabled}
+            className="bg-accent text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-ink transition disabled:opacity-50"
+          >
+            Add
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
