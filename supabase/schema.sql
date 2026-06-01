@@ -14,7 +14,7 @@ exception when duplicate_object then null; end $$;
 
 do $$ begin
   create type journey_status as enum (
-    'draft', 'ticket_pending', 'listed', 'full', 'in_progress', 'completed', 'cancelled'
+    'draft', 'ticket_pending', 'ticket_rejected', 'listed', 'full', 'in_progress', 'completed', 'cancelled'
   );
 exception when duplicate_object then null; end $$;
 
@@ -145,6 +145,18 @@ create table if not exists public.bookings (
   unique (job_id)               -- a job has at most one active booking
 );
 
+-- ── BIDS (carrier offers on open jobs) ───────────────────────────
+create table if not exists public.bids (
+  id            uuid primary key default gen_random_uuid(),
+  job_id        uuid not null references public.jobs(id) on delete cascade,
+  carrier_id    uuid not null references public.profiles(id) on delete cascade,
+  amount_pence  integer not null check (amount_pence > 0),
+  status        text not null default 'pending' check (status in ('pending', 'accepted', 'rejected', 'expired')),
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+  unique (job_id, carrier_id)
+);
+
 -- ── MESSAGES (in-app chat between sender and carrier) ─────────────
 create table if not exists public.messages (
   id          uuid primary key default gen_random_uuid(),
@@ -235,6 +247,8 @@ create index if not exists jobs_status_idx on public.jobs (status) where status 
 create index if not exists bookings_carrier_idx on public.bookings (carrier_id, status);
 create index if not exists bookings_sender_idx on public.bookings (sender_id, status);
 create index if not exists messages_booking_idx on public.messages (booking_id, created_at);
+create index if not exists bids_job_idx on public.bids (job_id, status);
+create index if not exists bids_carrier_idx on public.bids (carrier_id, created_at);
 
 -- ════════════════════════════════════════════════════════════════════
 -- ROW-LEVEL SECURITY
@@ -246,6 +260,7 @@ alter table public.carrier_profiles enable row level security;
 alter table public.journeys enable row level security;
 alter table public.jobs enable row level security;
 alter table public.bookings enable row level security;
+alter table public.bids enable row level security;
 alter table public.messages enable row level security;
 alter table public.reviews enable row level security;
 alter table public.disputes enable row level security;
@@ -373,6 +388,35 @@ create policy "disputes_participants_insert" on public.disputes for insert with 
   raised_by = auth.uid()
 );
 
+-- bids: carriers can read bids on open jobs, senders can read/manage bids on own jobs
+drop policy if exists "bids_carrier_read" on public.bids;
+create policy "bids_carrier_read" on public.bids for select using (
+  carrier_id = auth.uid()
+  or exists (
+    select 1 from public.jobs j
+    where j.id = bids.job_id
+      and j.status = 'open'
+      and j.sender_id = auth.uid()
+  )
+);
+
+drop policy if exists "bids_carrier_insert" on public.bids;
+create policy "bids_carrier_insert" on public.bids for insert with check (
+  carrier_id = auth.uid()
+  and exists (
+    select 1 from public.jobs j
+    where j.id = job_id and j.status = 'open'
+  )
+);
+
+drop policy if exists "bids_sender_update" on public.bids;
+create policy "bids_sender_update" on public.bids for update using (
+  exists (
+    select 1 from public.jobs j
+    where j.id = bids.job_id and j.sender_id = auth.uid()
+  )
+);
+
 -- waitlist: anyone (including anon) can insert, nobody can read via API
 drop policy if exists "waitlist_anon_insert" on public.waitlist;
 create policy "waitlist_anon_insert" on public.waitlist for insert with check (true);
@@ -415,6 +459,10 @@ create trigger set_updated_at before update on public.jobs
 
 drop trigger if exists set_updated_at on public.bookings;
 create trigger set_updated_at before update on public.bookings
+  for each row execute function public.tg_set_updated_at();
+
+drop trigger if exists set_updated_at on public.bids;
+create trigger set_updated_at before update on public.bids
   for each row execute function public.tg_set_updated_at();
 
 -- Auto-create a profile row when a new auth user signs up.
