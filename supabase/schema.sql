@@ -275,7 +275,7 @@ drop policy if exists "profiles_self_insert" on public.profiles;
 create policy "profiles_self_insert" on public.profiles for insert with check (auth.uid() = id);
 
 drop policy if exists "profiles_self_update" on public.profiles;
-create policy "profiles_self_update" on public.profiles for update using (auth.uid() = id);
+create policy "profiles_self_update" on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
 
 -- carrier_profiles: public read of verification status, self write
 drop policy if exists "carrier_profiles_read" on public.carrier_profiles;
@@ -442,9 +442,26 @@ begin
   return new;
 end $$;
 
+-- Capitalize first letter of first_name and last_name
+create or replace function public.tg_capitalize_names() returns trigger
+language plpgsql as $$
+begin
+  if new.first_name is not null then
+    new.first_name := upper(substring(new.first_name, 1, 1)) || lower(substring(new.first_name, 2));
+  end if;
+  if new.last_name is not null then
+    new.last_name := upper(substring(new.last_name, 1, 1)) || lower(substring(new.last_name, 2));
+  end if;
+  return new;
+end $$;
+
 drop trigger if exists set_updated_at on public.profiles;
 create trigger set_updated_at before update on public.profiles
   for each row execute function public.tg_set_updated_at();
+
+drop trigger if exists capitalize_names on public.profiles;
+create trigger capitalize_names before insert or update on public.profiles
+  for each row execute function public.tg_capitalize_names();
 
 drop trigger if exists set_updated_at on public.carrier_profiles;
 create trigger set_updated_at before update on public.carrier_profiles
