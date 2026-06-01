@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { UserRole, IdVerificationStatus } from '@/lib/types';
 import { stubVerifyId } from '@/lib/actions/stub-verify-id';
+import { uploadAvatar } from '@/lib/actions/upload-avatar';
 
 export default function ProfileForm({
   email,
@@ -37,38 +38,18 @@ export default function ProfileForm({
   async function uploadPhoto(file: File) {
     setPhotoUploading(true);
     setError(null);
-    const supabase = createClient() as any;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setError('Not signed in.');
-      setPhotoUploading(false);
-      return;
-    }
 
-    // Upload file to storage
-    const fileName = `${user.id}-${Date.now()}`;
-    const { error: uploadErr } = await supabase.storage
-      .from('avatars')
-      .upload(fileName, file, { upsert: true });
+    const fd = new FormData();
+    fd.append('file', file);
 
-    if (uploadErr) {
-      setError(`Photo upload failed: ${uploadErr.message}`);
-      setPhotoUploading(false);
-      return;
-    }
-
-    // Update profile with avatar URL
-    const avatarUrl = `avatars/${fileName}`;
-    const { error: updateErr } = await supabase
-      .from('profiles')
-      .update({ avatar_url: avatarUrl })
-      .eq('id', user.id);
-
+    const res = await uploadAvatar(fd);
     setPhotoUploading(false);
-    if (updateErr) {
-      setError(updateErr.message);
+
+    if ('error' in res) {
+      setError(res.error);
       return;
     }
+
     setPhotoPreview(URL.createObjectURL(file));
     setSavedAt(new Date().toLocaleTimeString('en-GB'));
     router.refresh();
