@@ -46,7 +46,7 @@ export default function ProfileForm({
     setPhotoUploading(false);
 
     if ('error' in res) {
-      setError(res.error);
+      setError(res.error ?? 'Upload failed');
       return;
     }
 
