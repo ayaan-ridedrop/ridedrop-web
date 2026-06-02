@@ -1,10 +1,11 @@
 // /dashboard — landing for logged-in users.
-// Shows: active bookings + recent matched jobs/journeys (last 48h only)
+// Shows: active bookings + job/journey management with status tabs
 
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
+import DashboardTabs from './DashboardTabs';
 
 export default async function DashboardPage() {
   const supabase = createClient() as any;
@@ -19,77 +20,26 @@ export default async function DashboardPage() {
 
   const isCarrier = profile?.role === 'carrier' || profile?.role === 'both';
 
-  // Get 48h cutoff
-  const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
-
-  // Fetch active bookings with journey info
+  // Fetch ALL bookings (not just active) for filtering
   const { data: bookings } = await supabase
     .from('bookings')
-    .select('id, status, agreed_price_pence, created_at, journey_id')
+    .select('id, status, agreed_price_pence, created_at, journey_id, job_id')
     .or(`sender_id.eq.${user.id},carrier_id.eq.${user.id}`)
-    .in('status', ['accepted', 'picked_up', 'in_transit', 'delivered'])
     .order('created_at', { ascending: false });
 
-  // Fetch journeys to check departure times
+  // Fetch journeys with details
   const { data: allJourneys } = await supabase
     .from('journeys')
-    .select('id, departure_at');
-
-  const journeyMap = new Map(allJourneys?.map((j: any) => [j.id, j]) ?? []);
-
-  // Fetch recent matched jobs (last 48h, exclude cancelled/expired)
-  const { data: recentJobs } = await supabase
-    .from('jobs')
-    .select('id, from_station, to_station, status, created_at')
-    .eq('sender_id', user.id)
-    .eq('status', 'matched')
-    .gte('created_at', fortyEightHoursAgo)
-    .gt('must_arrive_by', new Date().toISOString())
+    .select('id, from_station, to_station, departure_at, status, carrier_id, created_at, minimum_price_pence')
+    .eq('carrier_id', user.id)
     .order('created_at', { ascending: false });
 
-  // Fetch recent journeys (last 48h, carriers only)
-  const recentJourneys = isCarrier
-    ? (
-        await supabase
-          .from('journeys')
-          .select('id, from_station, to_station, departure_at, status, created_at')
-          .eq('carrier_id', user.id)
-          .neq('status', 'cancelled')
-          .gte('created_at', fortyEightHoursAgo)
-          .order('departure_at', { ascending: false })
-      ).data
-    : [];
-
-  // Combine active items (filter out old bookings where journey has departed)
-  const activeItems = [
-    ...(bookings
-      ?.filter((b: any) => {
-        const journey = journeyMap.get(b.journey_id) as any;
-        if (!journey) return true; // Keep if no journey found
-        return new Date(journey.departure_at) >= new Date(); // Keep only if journey hasn't departed
-      })
-      .map((b: any) => ({
-        type: 'booking',
-        id: b.id,
-        title: `Booking · ${b.status}`,
-        price: b.agreed_price_pence / 100,
-        createdAt: b.created_at,
-      })) ?? []),
-    ...(recentJobs?.map((j: any) => ({
-      type: 'job',
-      id: j.id,
-      title: `${j.from_station} → ${j.to_station} (matched)`,
-      price: j.max_budget_pence / 100,
-      createdAt: j.created_at,
-    })) ?? []),
-    ...(recentJourneys?.map((j: any) => ({
-      type: 'journey',
-      id: j.id,
-      title: `${j.from_station} → ${j.to_station}`,
-      price: null,
-      createdAt: j.created_at,
-    })) ?? []),
-  ].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  // Fetch jobs (for senders)
+  const { data: allJobs } = await supabase
+    .from('jobs')
+    .select('id, from_station, to_station, status, created_at, must_arrive_by')
+    .eq('sender_id', user.id)
+    .order('created_at', { ascending: false });
 
   return (
     <AppShell user={{ email: user.email!, firstName: profile?.first_name }}>
@@ -140,50 +90,17 @@ export default async function DashboardPage() {
         )}
       </div>
 
-      {/* ACTIVE SECTION (consolidated) */}
-      {activeItems.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-xl mb-4">Active</h2>
-          <ul className="space-y-2">
-            {activeItems.map((item) => (
-              <li
-                key={`${item.type}-${item.id}`}
-                className="bg-white border border-rail rounded-xl px-5 py-4 flex items-center justify-between hover:border-accent transition"
-              >
-                <Link
-                  href={
-                    item.type === 'booking'
-                      ? `/bookings/${item.id}`
-                      : item.type === 'job'
-                        ? `/jobs/your-jobs`
-                        : `/journeys/your-journeys`
-                  }
-                  className="flex-1 text-sm hover:text-accent"
-                >
-                  {item.title}
-                </Link>
-                {item.price !== null && (
-                  <span className="font-display font-bold ml-4">
-                    £{item.price.toFixed(2)}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {/* STATUS TABS FOR ACTIVITY */}
+      <DashboardTabs
+        bookings={bookings || []}
+        journeys={isCarrier ? (allJourneys || []) : []}
+        jobs={allJobs || []}
+        isCarrier={isCarrier}
+      />
 
-      {activeItems.length === 0 && (
-        <section className="mb-10">
-          <p className="text-ink-soft text-sm font-light">
-            No active deliveries. {!isCarrier ? 'Post a job' : 'Accept a job'} to get started.
-          </p>
-        </section>
-      )}
-
-      {/* FULL ACTIVITY LINK */}
-      <section className="space-y-2 text-sm">
-        <Link href="/activity" className="block text-accent hover:underline font-medium">
+      {/* LINK TO FULL ACTIVITY */}
+      <section className="mt-10 text-sm">
+        <Link href="/activity" className="text-accent hover:underline font-medium">
           → View all activity (bookings, jobs, journeys)
         </Link>
       </section>
