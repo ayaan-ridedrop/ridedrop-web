@@ -1,30 +1,31 @@
-// Server Action — either party can raise a dispute on an active booking.
-// Freezes the booking status to 'disputed' so funds don't auto-release.
-
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
+import { revalidatePath } from 'next/cache';
 
 const schema = z.object({
   bookingId: z.string().uuid(),
-  reason: z.string().min(3).max(80),
-  description: z.string().max(1000).optional(),
+  reason: z.string().min(5).max(100),
+  description: z.string().max(500).optional(),
 });
 
 export async function raiseDispute(formData: FormData) {
   const parsed = schema.safeParse({
     bookingId: formData.get('bookingId'),
     reason: formData.get('reason'),
-    description: formData.get('description') ?? undefined,
+    description: formData.get('description'),
   });
-  if (!parsed.success) return { error: 'Invalid input' };
 
-  const supabase  = createClient() as any;
+  if (!parsed.success) {
+    return { error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+  }
+
+  const supabase = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Not signed in' };
 
+  // Verify user is part of this booking
   const { data: booking } = await supabase
     .from('bookings')
     .select('id, sender_id, carrier_id, status')
@@ -32,28 +33,38 @@ export async function raiseDispute(formData: FormData) {
     .maybeSingle();
 
   if (!booking) return { error: 'Booking not found' };
-  if (![booking.sender_id, booking.carrier_id].includes(user.id)) {
-    return { error: 'Not your booking' };
+  if (booking.sender_id !== user.id && booking.carrier_id !== user.id) {
+    return { error: 'You are not part of this booking' };
   }
-  if (['completed', 'cancelled'].includes(booking.status)) {
-    return { error: 'Booking is already closed' };
+  if (booking.status !== 'delivered' && booking.status !== 'completed') {
+    return { error: 'Can only dispute completed deliveries' };
   }
 
-  const { error: insertErr } = await supabase.from('disputes').insert({
-    booking_id: booking.id,
-    raised_by: user.id,
-    reason: parsed.data.reason,
-    description: parsed.data.description || null,
-    status: 'open',
-  });
-  if (insertErr) return { error: insertErr.message };
+  // Check if dispute already exists
+  const { data: existingDispute } = await supabase
+    .from('disputes')
+    .select('id')
+    .eq('booking_id', parsed.data.bookingId)
+    .eq('raised_by', user.id)
+    .maybeSingle();
 
-  // Freeze the booking so funds don't auto-release while admin investigates.
-  await supabase
-    .from('bookings')
-    .update({ status: 'disputed', auto_release_at: null })
-    .eq('id', booking.id);
+  if (existingDispute) {
+    return { error: 'You have already raised a dispute on this booking' };
+  }
 
-  revalidatePath(`/bookings/${booking.id}`);
+  // Create dispute
+  const { error: err } = await supabase
+    .from('disputes')
+    .insert({
+      booking_id: parsed.data.bookingId,
+      raised_by: user.id,
+      reason: parsed.data.reason,
+      description: parsed.data.description,
+      status: 'open',
+    });
+
+  if (err) return { error: err.message };
+
+  revalidatePath(`/bookings/${parsed.data.bookingId}`);
   return { ok: true };
 }
