@@ -10,16 +10,27 @@ export async function POST(req: Request) {
   const supabase = createClient() as any;
 
   try {
+    const now = new Date().toISOString();
+
     // Cancel all open jobs past their deadline
-    const { error } = await supabase
+    const { error: jobsErr } = await supabase
       .from('jobs')
       .update({ status: 'cancelled' })
       .eq('status', 'open')
-      .lt('must_arrive_by', new Date().toISOString());
+      .lt('must_arrive_by', now);
 
-    if (error) throw error;
+    if (jobsErr) throw jobsErr;
 
-    return Response.json({ success: true, message: 'Expired jobs cancelled' });
+    // Also cancel journeys that have already departed
+    const { error: journeysErr } = await supabase
+      .from('journeys')
+      .update({ status: 'cancelled' })
+      .in('status', ['draft', 'listed'])
+      .lt('departure_at', now);
+
+    if (journeysErr) throw journeysErr;
+
+    return Response.json({ success: true, message: 'Expired jobs and journeys cancelled' });
   } catch (err: any) {
     console.error('[cron] error:', err);
     return Response.json({ error: err.message }, { status: 500 });

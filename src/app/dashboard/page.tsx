@@ -37,13 +37,14 @@ export default async function DashboardPage() {
 
   const journeyMap = new Map(allJourneys?.map((j: any) => [j.id, j]) ?? []);
 
-  // Fetch recent matched jobs (last 48h)
+  // Fetch recent matched jobs (last 48h, exclude cancelled/expired)
   const { data: recentJobs } = await supabase
     .from('jobs')
     .select('id, from_station, to_station, status, created_at')
     .eq('sender_id', user.id)
     .eq('status', 'matched')
     .gte('created_at', fortyEightHoursAgo)
+    .gt('must_arrive_by', new Date().toISOString())
     .order('created_at', { ascending: false });
 
   // Fetch recent journeys (last 48h, carriers only)

@@ -56,10 +56,7 @@ export default async function YourJobsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="text-right ml-4 flex flex-col gap-2">
-                    <div className="font-display font-extrabold text-accent text-xl">
-                      up to £{(j.max_budget_pence / 100).toFixed(0)}
-                    </div>
+                  <div className="text-right ml-4">
                     <CancelJobButton jobId={j.id} />
                   </div>
                 </div>
@@ -85,7 +82,7 @@ export default async function YourJobsPage() {
                   </div>
                   <div className="text-sm text-ink-soft">{j.package_description}</div>
                   <div className="text-xs text-ink-muted mt-1">
-                    Matched · £{(j.max_budget_pence / 100).toFixed(0)} budget
+                    Matched · accepting bids
                   </div>
                 </Link>
               </li>

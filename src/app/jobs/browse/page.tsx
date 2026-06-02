@@ -27,7 +27,7 @@ export default async function BrowseJobsPage({
     .from('jobs')
     .select('id, from_station, to_station, package_description, package_size, must_arrive_by, created_at')
     .eq('status', 'open')
-    .gte('must_arrive_by', new Date().toISOString())
+    .gt('must_arrive_by', new Date().toISOString())
     .order('must_arrive_by', { ascending: true })
     .limit(50);
   if (searchParams.from) q = q.eq('from_station', searchParams.from);
