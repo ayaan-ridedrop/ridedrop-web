@@ -33,14 +33,22 @@ export default async function ProfilePage() {
             Update your details and toggle carrier mode.
           </p>
         </div>
-        {isCarrier && (
+        <div className="flex gap-4">
           <Link
-            href="/profile/earnings"
+            href="/profile/reviews"
             className="text-sm text-accent underline font-medium hover:text-ink transition"
           >
-            View earnings →
+            Reviews
           </Link>
-        )}
+          {isCarrier && (
+            <Link
+              href="/profile/earnings"
+              className="text-sm text-accent underline font-medium hover:text-ink transition"
+            >
+              Earnings
+            </Link>
+          )}
+        </div>
       </div>
 
       <ProfileForm
