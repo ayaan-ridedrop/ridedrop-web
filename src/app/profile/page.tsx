@@ -1,5 +1,6 @@
 // /profile — manage your own profile. Switch role, edit name etc.
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
 import ProfileForm from './ProfileForm';
@@ -21,12 +22,27 @@ export default async function ProfilePage() {
     .eq('id', user.id)
     .maybeSingle();
 
+  const isCarrier = profile?.role === 'carrier' || profile?.role === 'both';
+
   return (
     <AppShell user={{ email: user.email!, firstName: profile?.first_name }}>
-      <h1 className="text-4xl mb-2">Your profile</h1>
-      <p className="text-ink-soft mb-8 font-light">
-        Update your details and toggle carrier mode.
-      </p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-4xl mb-2">Your profile</h1>
+          <p className="text-ink-soft font-light">
+            Update your details and toggle carrier mode.
+          </p>
+        </div>
+        {isCarrier && (
+          <Link
+            href="/profile/earnings"
+            className="text-sm text-accent underline font-medium hover:text-ink transition"
+          >
+            View earnings →
+          </Link>
+        )}
+      </div>
+
       <ProfileForm
         email={user.email!}
         firstName={profile?.first_name ?? ''}
