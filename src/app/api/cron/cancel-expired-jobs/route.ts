@@ -30,7 +30,11 @@ export async function POST(req: Request) {
 
     if (journeysErr) throw journeysErr;
 
-    return Response.json({ success: true, message: 'Expired jobs and journeys cancelled' });
+    // Mark jobs as 'completed' if their booking is completed
+    const { error: jobCompleteErr } = await supabase.rpc('complete_matched_jobs');
+    if (jobCompleteErr) console.warn('[cron] job completion warning:', jobCompleteErr);
+
+    return Response.json({ success: true, message: 'Expired jobs cancelled, matched jobs completed' });
   } catch (err: any) {
     console.error('[cron] error:', err);
     return Response.json({ error: err.message }, { status: 500 });

@@ -564,3 +564,38 @@ end $$;
 drop trigger if exists review_recompute on public.reviews;
 create trigger review_recompute after insert on public.reviews
   for each row execute function public.tg_review_recompute();
+
+-- ── AUTO-COMPLETE BOOKINGS ────────────────────────────────────────
+-- When delivery photo is uploaded (delivery_photo_url is set), auto-mark as 'completed'.
+create or replace function public.tg_auto_complete_booking() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  -- If delivery_photo_url was just set and booking is in 'delivered', mark as 'completed'
+  if new.delivery_photo_url is not null 
+     and old.delivery_photo_url is null 
+     and new.status = 'delivered' then
+    new.status := 'completed';
+    new.updated_at := now();
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists auto_complete_booking on public.bookings;
+create trigger auto_complete_booking before update on public.bookings
+  for each row execute function public.tg_auto_complete_booking();
+
+-- ── COMPLETE MATCHED JOBS ────────────────────────────────────────
+-- When a booking is completed, mark its job as completed too.
+create or replace function public.complete_matched_jobs()
+returns void as $$
+begin
+  update public.jobs j
+  set status = 'completed'
+  where j.status = 'matched'
+    and exists (
+      select 1 from public.bookings b
+      where b.job_id = j.id
+        and b.status = 'completed'
+    );
+end;
+$$ language plpgsql security definer;
