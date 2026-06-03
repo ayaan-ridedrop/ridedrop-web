@@ -41,21 +41,38 @@ interface Props {
 export default function DashboardTabs({ bookings, journeys, jobs, isCarrier }: Props) {
   const [tab, setTab] = useState<'active' | 'completed' | 'archived'>('active');
 
+  // Helper: check if booking is older than 24h
+  const isOlderThan24h = (createdAt: string) => {
+    const created = new Date(createdAt);
+    const now = new Date();
+    const diffMs = now.getTime() - created.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    return diffHours > 24;
+  };
+
   // Categorize bookings
   const activeBookings = bookings.filter((b) =>
     ['accepted', 'picked_up', 'in_transit', 'delivered'].includes(b.status)
   );
-  const completedBookings = bookings.filter((b) => b.status === 'completed');
+  const completedBookings = bookings.filter(
+    (b) => b.status === 'completed' && !isOlderThan24h(b.created_at)
+  );
   const archivedBookings = bookings.filter((b) =>
-    ['cancelled', 'disputed'].includes(b.status)
+    ['cancelled', 'disputed'].includes(b.status) ||
+    (b.status === 'completed' && isOlderThan24h(b.created_at))
   );
 
   // Categorize journeys
   const activeJourneys = journeys.filter(
     (j) => ['listed', 'in_progress'].includes(j.status) && new Date(j.departure_at) > new Date()
   );
-  const completedJourneys = journeys.filter((j) => j.status === 'completed');
-  const pastJourneys = journeys.filter((j) => new Date(j.departure_at) <= new Date() && j.status !== 'completed');
+  const completedJourneys = journeys.filter(
+    (j) => j.status === 'completed' && !isOlderThan24h(j.created_at)
+  );
+  const pastJourneys = journeys.filter(
+    (j) => (new Date(j.departure_at) <= new Date() && j.status !== 'completed') ||
+           (j.status === 'completed' && isOlderThan24h(j.created_at))
+  );
 
   // Categorize jobs
   const activeJobs = jobs.filter(
