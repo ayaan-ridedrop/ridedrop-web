@@ -155,13 +155,7 @@ export default async function BookingDetailPage({
           <div className="bg-white border border-rail rounded-2xl p-5 space-y-3 text-sm">
             <Row label={youAreSender ? 'Carrier' : 'Sender'}>{otherName}</Row>
             <Row label="Train">
-              {journey?.departure_at ? new Date(journey.departure_at).toLocaleString('en-GB') : '—'}
-              {journey?.train_operator ? ` · ${journey.train_operator}` : ''}
-            <Row label="Train">
-              {journey?.departure_at ? new Date(journey.departure_at).toLocaleString('en-GB') : '—'}
-              {journey?.train_operator ? ` · ${journey.train_operator}` : ''}
-            <Row label="Train">
-              {journey?.departure_at ? new Date(journey.departure_at).toLocaleString('en-GB') : '—'}
+              {new Date(journey?.departure_at ?? '').toLocaleString('en-GB')}
               {journey?.train_operator ? ` · ${journey.train_operator}` : ''}
             </Row>
             <Row label="Arrival">
