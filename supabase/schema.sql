@@ -599,3 +599,20 @@ begin
     );
 end;
 $$ language plpgsql security definer;
+
+-- ── CLEANUP ORPHANED MATCHED JOBS ────────────────────────────────────
+-- If a job is 'matched' but has no active booking, revert it to 'open'.
+-- Runs periodically (via cron) or on-demand.
+create or replace function public.cleanup_orphaned_jobs()
+returns void as $$
+begin
+  update public.jobs j
+  set status = 'open'
+  where j.status = 'matched'
+    and not exists (
+      select 1 from public.bookings b
+      where b.job_id = j.id
+        and b.status in ('accepted', 'picked_up', 'in_transit', 'delivered', 'completed')
+    );
+end;
+$$ language plpgsql security definer;

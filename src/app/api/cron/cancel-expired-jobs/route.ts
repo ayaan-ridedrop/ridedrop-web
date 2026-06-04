@@ -34,7 +34,11 @@ export async function POST(req: Request) {
     const { error: jobCompleteErr } = await supabase.rpc('complete_matched_jobs');
     if (jobCompleteErr) console.warn('[cron] job completion warning:', jobCompleteErr);
 
-    return Response.json({ success: true, message: 'Expired jobs cancelled, matched jobs completed' });
+    // Cleanup orphaned matched jobs (matched with no active booking)
+    const { error: cleanupErr } = await supabase.rpc('cleanup_orphaned_jobs');
+    if (cleanupErr) console.warn('[cron] cleanup warning:', cleanupErr);
+
+    return Response.json({ success: true, message: 'Expired jobs cancelled, matched jobs completed, orphaned jobs cleaned' });
   } catch (err: any) {
     console.error('[cron] error:', err);
     return Response.json({ error: err.message }, { status: 500 });
