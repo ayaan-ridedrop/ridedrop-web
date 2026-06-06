@@ -3,6 +3,17 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
 
+type Conversation = {
+  bookingId: string;
+  otherUser: { id: string; first_name: string; last_name: string; avatar_url?: string } | undefined;
+  otherUserId: string;
+  route: string;
+  status: string;
+  latestMessage: string;
+  latestMessageTime: string;
+  price: number;
+};
+
 export const metadata = {
   title: 'Messages | RideDrop',
 };
@@ -114,7 +125,7 @@ export default async function MessagesPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {conversations.map((conv) => (
+          {conversations.map((conv: Conversation) => (
             <Link
               key={conv.bookingId}
               href={`/bookings/${conv.bookingId}`}
