@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
 import ProfileForm from './ProfileForm';
+import { getTrustTier } from '@/lib/get-trust-tier';
+import { TrustBadgeLarge } from '@/components/TrustBadge';
 
 export default async function ProfilePage() {
   const supabase  = createClient() as any;
@@ -22,32 +24,42 @@ export default async function ProfilePage() {
     .eq('id', user.id)
     .maybeSingle();
 
+  const trustTier = await getTrustTier(user.id);
   const isCarrier = profile?.role === 'carrier' || profile?.role === 'both';
 
   return (
     <AppShell user={{ email: user.email!, firstName: profile?.first_name }}>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-start justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-4xl mb-2">Your profile</h1>
+          <h1 className="text-4xl font-display font-bold mb-2">Your profile</h1>
           <p className="text-ink-soft font-light">
             Update your details and toggle carrier mode.
           </p>
         </div>
-        <div className="flex gap-4">
-          <Link
-            href="/profile/reviews"
-            className="text-sm text-accent underline font-medium hover:text-ink transition"
-          >
-            Reviews
-          </Link>
-          {isCarrier && (
+        <div className="flex flex-col items-end gap-3">
+          {trustTier && (
+            <TrustBadgeLarge
+              tier={trustTier.tier}
+              deliveries={trustTier.deliveries}
+              rating={trustTier.rating}
+            />
+          )}
+          <div className="flex gap-4">
             <Link
-              href="/profile/earnings"
+              href="/profile/reviews"
               className="text-sm text-accent underline font-medium hover:text-ink transition"
             >
-              Earnings
+              Reviews
             </Link>
-          )}
+            {isCarrier && (
+              <Link
+                href="/profile/earnings"
+                className="text-sm text-accent underline font-medium hover:text-ink transition"
+              >
+                Earnings
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 

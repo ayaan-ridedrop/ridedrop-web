@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
 import BidForm from '@/components/BidForm';
 import BidsList from '@/components/BidsList';
+import { getTrustTiers } from '@/lib/get-trust-tier';
 
 export default async function JobDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient() as any;
@@ -43,6 +44,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
   let bids: any[] = [];
   let bidCarriers: Record<string, any> = {};
   let bidJourneys: Record<string, any> = {};
+  let bidTrustTiers: Record<string, any> = {};
 
   if (youAreOwner) {
     const { data: bidData } = await supabase
@@ -61,6 +63,10 @@ export default async function JobDetailPage({ params }: { params: { id: string }
       carriers?.forEach((c: any) => {
         bidCarriers[c.id] = c;
       });
+
+      // Fetch trust tiers for carriers
+      const trustTiers = await getTrustTiers(carrierIds);
+      bidTrustTiers = trustTiers;
 
       // Fetch journeys
       const journeyIds = [...new Set(bids.map((b) => b.journey_id))];
@@ -114,7 +120,7 @@ export default async function JobDetailPage({ params }: { params: { id: string }
         {/* Right column: bids (only if owner) */}
         {youAreOwner && (
           <div className="col-span-1">
-            <BidsList jobId={job.id} bids={bids} carriers={bidCarriers} journeys={bidJourneys} />
+            <BidsList jobId={job.id} bids={bids} carriers={bidCarriers} journeys={bidJourneys} trustTiers={bidTrustTiers} />
           </div>
         )}
       </div>

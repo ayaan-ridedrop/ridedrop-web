@@ -2,17 +2,21 @@
 
 import { useState } from 'react';
 import { acceptBid } from '@/lib/actions/accept-bid';
+import { TrustBadge } from './TrustBadge';
+import { LoadingSpinner } from './LoadingSpinner';
 
 export default function BidsList({
   jobId,
   bids,
   carriers,
   journeys,
+  trustTiers = {},
 }: {
   jobId: string;
   bids: Array<{ id: string; carrier_id: string; journey_id: string; amount_pence: number; status: string }>;
   carriers: Record<string, { first_name: string; last_name: string; avatar_url?: string }>;
   journeys: Record<string, { from_station: string; to_station: string; departure_at: string; arrival_at: string }>;
+  trustTiers?: Record<string, { tier: 'basic' | 'verified' | 'trusted'; deliveries: number; rating: number }>;
 }) {
   const [accepting, setAccepting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -59,21 +63,29 @@ export default function BidsList({
 
         return (
           <div key={bid.id} className="bg-white border border-rail rounded-2xl p-4">
-            {/* Carrier + rating row */}
-            <div className="flex items-center gap-3 mb-3">
-              {carrier.avatar_url ? (
-                <img src={carrier.avatar_url} alt={carrier.first_name} className="w-12 h-12 rounded-full object-cover" />
-              ) : (
-                <div className="w-12 h-12 rounded-full bg-rail flex items-center justify-center text-ink-muted font-bold">
-                  {carrier.first_name[0]}
+            {/* Carrier + trust tier row */}
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-3">
+                {carrier.avatar_url ? (
+                  <img src={carrier.avatar_url} alt={carrier.first_name} className="w-12 h-12 rounded-full object-cover" />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-rail flex items-center justify-center text-ink-muted font-bold">
+                    {carrier.first_name[0]}
+                  </div>
+                )}
+                <div>
+                  <div className="font-medium text-sm">
+                    {carrier.first_name} {carrier.last_name}
+                  </div>
                 </div>
-              )}
-              <div>
-                <div className="font-medium text-sm">
-                  {carrier.first_name} {carrier.last_name}
-                </div>
-                <div className="text-xs text-ink-soft">New carrier</div>
               </div>
+              {trustTiers[bid.carrier_id] ? (
+                <TrustBadge
+                  tier={trustTiers[bid.carrier_id].tier}
+                  deliveries={trustTiers[bid.carrier_id].deliveries}
+                  rating={trustTiers[bid.carrier_id].rating}
+                />
+              ) : null}
             </div>
 
             {/* Journey details */}
@@ -101,9 +113,16 @@ export default function BidsList({
             <button
               onClick={() => handleAccept(bid.id)}
               disabled={accepting === bid.id}
-              className="w-full bg-accent text-white rounded-full px-4 py-2 text-sm font-medium hover:bg-ink transition disabled:opacity-50"
+              className="w-full bg-accent text-white rounded-full px-4 py-2 text-sm font-medium hover:bg-ink transition disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {accepting === bid.id ? 'Accepting...' : 'Accept this bid'}
+              {accepting === bid.id ? (
+                <>
+                  <LoadingSpinner size="sm" inline />
+                  Accepting...
+                </>
+              ) : (
+                'Accept this bid'
+              )}
             </button>
           </div>
         );
