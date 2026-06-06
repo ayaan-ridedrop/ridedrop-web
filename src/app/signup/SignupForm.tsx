@@ -89,7 +89,7 @@ export default function SignupForm() {
     if (authErr) {
       setLoading(false);
       const friendlyError = getFriendlyErrorMessage(authErr.message);
-      setError(friendlyError);
+      setError(friendlyError.message);
       console.error('[signup] error:', authErr);
       return;
     }

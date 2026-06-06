@@ -44,7 +44,7 @@ export default function LoginForm({
 
     if (err) {
       const friendlyError = getFriendlyErrorMessage(err.message);
-      setError(friendlyError);
+      setError(friendlyError.message);
       console.error('[login] error:', err);
       return;
     }

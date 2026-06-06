@@ -72,7 +72,7 @@ export default function SendJobForm() {
     setSubmitting(false);
     if (err) {
       const friendlyError = getFriendlyErrorMessage(err.message);
-      setError(friendlyError);
+      setError(friendlyError.message);
       console.error('[send job] error:', err);
       return;
     }
