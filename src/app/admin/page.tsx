@@ -16,6 +16,33 @@ export default async function AdminPage() {
     redirect('/login');
   }
 
+  // Fetch analytics metrics
+  const { count: totalUsers } = await supabase
+    .from('profiles')
+    .select('id', { count: 'exact', head: true });
+
+  const { count: completedBookings } = await supabase
+    .from('bookings')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'completed');
+
+  const { count: activeDisputes } = await supabase
+    .from('disputes')
+    .select('id', { count: 'exact', head: true })
+    .in('status', ['open', 'reviewing']);
+
+  const { count: totalCarriers } = await supabase
+    .from('carrier_profiles')
+    .select('id', { count: 'exact', head: true });
+
+  // Calculate total platform revenue (20% commission)
+  const { data: totalEarningsData } = await supabase
+    .from('bookings')
+    .select('commission_pence')
+    .eq('status', 'completed');
+
+  const totalRevenue = (totalEarningsData || []).reduce((sum: number, b: any) => sum + (b.commission_pence || 0), 0);
+
   // Fetch all disputes with related data
   const { data: disputes, error } = await (supabase
     .from('disputes') as any)
@@ -73,7 +100,25 @@ export default async function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+        <h1 className="text-4xl font-display font-bold mb-2">Admin Dashboard</h1>
+        <p className="text-ink-soft mb-8">Platform overview, moderation, and analytics</p>
+
+        {/* KEY METRICS */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <MetricCard label="Total Users" value={totalUsers || 0} icon="👥" />
+          <MetricCard label="Active Carriers" value={totalCarriers || 0} icon="🚚" />
+          <MetricCard label="Completed Deliveries" value={completedBookings || 0} icon="✓" />
+          <MetricCard label="Platform Revenue" value={`£${(totalRevenue / 100).toFixed(2)}`} icon="💰" />
+        </div>
+
+        {/* ALERTS */}
+        {activeDisputes && activeDisputes > 0 && (
+          <div className="bg-red-50 border border-red-300 rounded-lg p-4 mb-8">
+            <p className="text-red-700 font-medium">
+              ⚠️ <strong>{activeDisputes}</strong> open dispute{activeDisputes !== 1 ? 's' : ''} need review
+            </p>
+          </div>
+        )}
 
         {/* Quick links */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -179,6 +224,20 @@ export default async function AdminPage() {
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function MetricCard({ label, value, icon }: { label: string; value: string | number; icon: string }) {
+  return (
+    <div className="bg-white border border-rail rounded-lg p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-ink-muted mb-1">{label}</p>
+          <p className="text-2xl font-display font-bold">{value}</p>
+        </div>
+        <span className="text-3xl">{icon}</span>
       </div>
     </div>
   );
