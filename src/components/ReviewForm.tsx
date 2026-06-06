@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { leaveReview } from '@/lib/actions/leave-review';
+import { LoadingSpinner } from './LoadingSpinner';
 
 export default function ReviewForm({
   bookingId,
@@ -13,7 +14,7 @@ export default function ReviewForm({
   const [rating, setRating] = useState<number>(5);
   const [body, setBody] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; hint?: string } | null>(null);
   const [done, setDone] = useState(false);
 
   if (done) {
@@ -34,8 +35,14 @@ export default function ReviewForm({
     if (body.trim()) fd.append('body', body.trim());
     const res = await leaveReview(fd);
     setSubmitting(false);
-    if (res && 'error' in res) setError(res.error ?? null);
-    else setDone(true);
+    if (res && 'error' in res) {
+      setError({
+        message: res.error ?? 'Something went wrong',
+        hint: res.hint,
+      });
+    } else {
+      setDone(true);
+    }
   }
 
   return (
@@ -64,16 +71,29 @@ export default function ReviewForm({
         onChange={(e) => setBody(e.target.value.slice(0, 500))}
         placeholder="Optional — what stood out?"
         rows={3}
-        className="w-full border border-rail rounded-xl px-4 py-3 outline-none focus:border-accent-mid text-sm"
+        disabled={submitting}
+        className="w-full border border-rail rounded-xl px-4 py-3 outline-none focus:border-accent-mid text-sm disabled:opacity-50 transition"
       />
       <div className="text-xs text-ink-muted mt-1">{body.length}/500</div>
-      {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+      {error && (
+        <div className="bg-red-50 border border-red-300 rounded-lg p-3 mt-3">
+          <p className="text-sm font-medium text-red-700">{error.message}</p>
+          {error.hint && <p className="text-xs text-red-600 mt-1">{error.hint}</p>}
+        </div>
+      )}
       <button
         type="submit"
         disabled={submitting}
-        className="mt-3 bg-ink text-white rounded-full px-5 py-2.5 font-medium hover:bg-accent transition disabled:opacity-50"
+        className="mt-3 bg-ink text-white rounded-full px-5 py-2.5 font-medium hover:bg-accent transition disabled:opacity-50 flex items-center justify-center gap-2"
       >
-        {submitting ? 'Submitting…' : 'Submit review'}
+        {submitting ? (
+          <>
+            <LoadingSpinner size="sm" inline />
+            Submitting...
+          </>
+        ) : (
+          'Submit review'
+        )}
       </button>
     </form>
   );

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { submitBid } from '@/lib/actions/submit-bid';
+import { LoadingSpinner } from './LoadingSpinner';
 
 export default function BidForm({
   jobId,
@@ -86,9 +87,16 @@ export default function BidForm({
       <button
         type="submit"
         disabled={!selectedJourneyId || !amount || submitting}
-        className="w-full bg-accent text-white rounded-full px-5 py-3 font-medium hover:bg-ink transition disabled:opacity-50"
+        className="w-full bg-accent text-white rounded-full px-5 py-3 font-medium hover:bg-ink transition disabled:opacity-50 flex items-center justify-center gap-2"
       >
-        {submitting ? 'Submitting...' : 'Submit bid'}
+        {submitting ? (
+          <>
+            <LoadingSpinner size="sm" inline />
+            Submitting...
+          </>
+        ) : (
+          'Submit bid'
+        )}
       </button>
 
       {error && (

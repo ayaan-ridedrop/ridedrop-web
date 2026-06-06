@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { raiseDispute } from '@/lib/actions/raise-dispute';
+import { LoadingSpinner } from './LoadingSpinner';
 
 export default function DisputeForm({ bookingId }: { bookingId: string }) {
   const [showForm, setShowForm] = useState(false);
   const [reason, setReason] = useState('');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; hint?: string } | null>(null);
   const [success, setSuccess] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -25,7 +26,10 @@ export default function DisputeForm({ bookingId }: { bookingId: string }) {
     setSubmitting(false);
 
     if (res && 'error' in res) {
-      setError(res.error ?? 'Something went wrong');
+      setError({
+        message: res.error ?? 'Something went wrong',
+        hint: res.hint,
+      });
     } else {
       setSuccess(true);
       setReason('');
@@ -85,15 +89,27 @@ export default function DisputeForm({ bookingId }: { bookingId: string }) {
             />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <div className="bg-red-100 border border-red-600 rounded-lg p-3">
+              <p className="text-sm font-medium text-red-700">{error.message}</p>
+              {error.hint && <p className="text-xs text-red-600 mt-1">{error.hint}</p>}
+            </div>
+          )}
 
           <div className="flex gap-2">
             <button
               type="submit"
               disabled={!reason.trim() || submitting}
-              className="flex-1 bg-red-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-red-700 transition disabled:opacity-50"
+              className="flex-1 bg-red-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {submitting ? 'Submitting…' : 'Submit dispute'}
+              {submitting ? (
+                <>
+                  <LoadingSpinner size="sm" inline />
+                  Submitting...
+                </>
+              ) : (
+                'Submit dispute'
+              )}
             </button>
             <button
               type="button"
