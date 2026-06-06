@@ -28,7 +28,6 @@ export default function DisputeForm({ bookingId }: { bookingId: string }) {
     if (res && 'error' in res) {
       setError({
         message: res.error ?? 'Something went wrong',
-        hint: res.hint,
       });
     } else {
       setSuccess(true);
