@@ -20,6 +20,7 @@ export default function ChatThread({
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   // Subscribe to new messages via Broadcast (bypasses RLS, real-time delivery)
@@ -48,10 +49,42 @@ export default function ChatThread({
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
 
+  // Check for off-platform deal keywords
+  function checkForOffPlatformDeal(message: string): { blocked: boolean; reason?: string } {
+    const flaggedKeywords = [
+      'cash', 'pay me directly', 'transfer',
+      'paypal', 'venmo', 'bank transfer',
+      'whatsapp', 'telegram', 'signal',
+      'email me', 'phone number', 'call me',
+      'discount if', 'dont use ridedrop', 'outside platform',
+      'off app', 'off-app', 'direct payment',
+    ];
+
+    const lowerMsg = message.toLowerCase();
+    for (const keyword of flaggedKeywords) {
+      if (lowerMsg.includes(keyword)) {
+        return {
+          blocked: true,
+          reason: `We don't allow discussions about ${keyword}. All payments go through RideDrop for your protection.`,
+        };
+      }
+    }
+    return { blocked: false };
+  }
+
   async function send() {
     const trimmed = body.trim();
     if (!trimmed) return;
+
+    // Check for flagged keywords
+    const flagCheck = checkForOffPlatformDeal(trimmed);
+    if (flagCheck.blocked) {
+      setError(flagCheck.reason || 'Message contains flagged content');
+      return;
+    }
+
     setSending(true);
+    setError(null);
 
     // Optimistic update: add message immediately
     const tempId = `temp-${Date.now()}`;
@@ -130,27 +163,32 @@ export default function ChatThread({
         )}
         <div ref={endRef} />
       </div>
-      <div className="border-t border-rail p-3 flex gap-2">
-        <input
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              send();
-            }
-          }}
-          placeholder="Type a message…"
-          className="flex-1 border border-rail rounded-full px-4 py-2 outline-none focus:border-accent-mid text-sm"
-        />
-        <button
-          type="button"
-          onClick={send}
-          disabled={sending || !body.trim()}
-          className="bg-ink text-white rounded-full px-5 py-2 font-medium hover:bg-accent transition disabled:opacity-50 text-sm"
-        >
-          Send
-        </button>
+      <div className="border-t border-rail p-3 space-y-2">
+        {error && (
+          <p className="text-xs text-red-600 bg-red-50 rounded px-2 py-1">{error}</p>
+        )}
+        <div className="flex gap-2">
+          <input
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                send();
+              }
+            }}
+            placeholder="Type a message…"
+            className="flex-1 border border-rail rounded-full px-4 py-2 outline-none focus:border-accent-mid text-sm"
+          />
+          <button
+            type="button"
+            onClick={send}
+            disabled={sending || !body.trim()}
+            className="bg-ink text-white rounded-full px-5 py-2 font-medium hover:bg-accent transition disabled:opacity-50 text-sm"
+          >
+            Send
+          </button>
+        </div>
       </div>
     </div>
   );

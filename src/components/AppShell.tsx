@@ -27,6 +27,7 @@ export default function AppShell({
             <Link href="/journeys/new" className="hover:text-ink">List journey</Link>
             <Link href="/journeys/your-journeys" className="hover:text-ink">Your journeys</Link>
             <Link href="/bookings" className="hover:text-ink">Bookings</Link>
+            <Link href="/messages" className="hover:text-ink">💬 Messages</Link>
             <Link href="/earnings" className="hover:text-ink">Earnings</Link>
             <Link href="/notifications" className="hover:text-ink" aria-label="Activity">🔔</Link>
           </div>
@@ -54,11 +55,12 @@ export default function AppShell({
 
       {/* MOBILE BOTTOM TAB BAR */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-rail z-40">
-        <div className="grid grid-cols-5 text-center text-xs font-medium text-ink-muted">
+        <div className="grid grid-cols-6 text-center text-xs font-medium text-ink-muted">
           <Tab href="/dashboard" icon="🏠" label="Home" />
           <Tab href="/send" icon="➕" label="Send" />
           <Tab href="/jobs/browse" icon="📦" label="Jobs" />
           <Tab href="/bookings" icon="📍" label="Active" />
+          <Tab href="/messages" icon="💬" label="Messages" />
           <Tab href="/profile" icon="👤" label="Profile" />
         </div>
         {/* Safe area spacer for iPhone home indicator */}

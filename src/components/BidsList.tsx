@@ -109,21 +109,29 @@ export default function BidsList({
               </span>
             </div>
 
-            {/* Accept button */}
-            <button
-              onClick={() => handleAccept(bid.id)}
-              disabled={accepting === bid.id}
-              className="w-full bg-accent text-white rounded-full px-4 py-2 text-sm font-medium hover:bg-ink transition disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {accepting === bid.id ? (
-                <>
-                  <LoadingSpinner size="sm" inline />
-                  Accepting...
-                </>
-              ) : (
-                'Accept this bid'
-              )}
-            </button>
+            {/* Message & Accept buttons */}
+            <div className="flex gap-2">
+              <a
+                href={`/messages?user=${bid.carrier_id}`}
+                className="flex-1 border border-accent text-accent rounded-full px-4 py-2 text-sm font-medium hover:bg-accent/10 transition text-center"
+              >
+                💬 Message
+              </a>
+              <button
+                onClick={() => handleAccept(bid.id)}
+                disabled={accepting === bid.id}
+                className="flex-1 bg-accent text-white rounded-full px-4 py-2 text-sm font-medium hover:bg-ink transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {accepting === bid.id ? (
+                  <>
+                    <LoadingSpinner size="sm" inline />
+                    Accepting...
+                  </>
+                ) : (
+                  'Accept'
+                )}
+              </button>
+            </div>
           </div>
         );
       })}
