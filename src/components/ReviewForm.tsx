@@ -84,7 +84,7 @@ export default function ReviewForm({
       <button
         type="submit"
         disabled={submitting}
-        className="mt-3 bg-ink text-white rounded-full px-5 py-2.5 font-medium hover:bg-accent transition disabled:opacity-50 flex items-center justify-center gap-2"
+        className="mt-3 w-full bg-ink text-white rounded-full px-5 py-4 sm:py-2.5 font-medium hover:bg-accent transition disabled:opacity-50 flex items-center justify-center gap-2 min-h-[44px] sm:min-h-auto"
       >
         {submitting ? (
           <>

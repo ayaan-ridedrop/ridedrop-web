@@ -96,11 +96,11 @@ export default function DisputeForm({ bookingId }: { bookingId: string }) {
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-col sm:flex-row">
             <button
               type="submit"
               disabled={!reason.trim() || submitting}
-              className="flex-1 bg-red-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 bg-red-600 text-white rounded-lg px-4 py-4 sm:py-2 text-sm font-medium hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2 min-h-[44px] sm:min-h-auto"
             >
               {submitting ? (
                 <>
@@ -115,7 +115,7 @@ export default function DisputeForm({ bookingId }: { bookingId: string }) {
               type="button"
               onClick={() => setShowForm(false)}
               disabled={submitting}
-              className="flex-1 border border-red-300 rounded-lg px-4 py-2 text-sm font-medium hover:bg-red-50 transition disabled:opacity-50"
+              className="flex-1 border border-red-300 rounded-lg px-4 py-4 sm:py-2 text-sm font-medium hover:bg-red-50 transition disabled:opacity-50 min-h-[44px] sm:min-h-auto"
             >
               Cancel
             </button>

@@ -87,7 +87,7 @@ export default function BidForm({
       <button
         type="submit"
         disabled={!selectedJourneyId || !amount || submitting}
-        className="w-full bg-accent text-white rounded-full px-5 py-3 font-medium hover:bg-ink transition disabled:opacity-50 flex items-center justify-center gap-2"
+        className="w-full bg-accent text-white rounded-full px-5 py-4 sm:py-3 font-medium hover:bg-ink transition disabled:opacity-50 flex items-center justify-center gap-2 min-h-[44px] sm:min-h-auto"
       >
         {submitting ? (
           <>

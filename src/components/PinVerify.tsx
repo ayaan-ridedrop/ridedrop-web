@@ -48,7 +48,7 @@ export default function PinVerify({
           ? 'Ask the sender to read out their 4-digit pickup PIN.'
           : 'Ask the recipient to read out the 4-digit delivery PIN.'}
       </p>
-      <div className="flex flex-col md:flex-row gap-2">
+      <div className="flex flex-col md:flex-row gap-3">
         <input
           inputMode="numeric"
           pattern="\d{4}"
@@ -57,12 +57,12 @@ export default function PinVerify({
           onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
           placeholder="0000"
           disabled={submitting}
-          className="flex-1 text-center font-mono text-2xl tracking-[0.5em] border border-rail rounded-xl px-4 py-3 outline-none focus:border-accent-mid disabled:opacity-50 transition"
+          className="flex-1 text-center font-mono text-3xl sm:text-2xl tracking-[0.5em] border border-rail rounded-xl px-4 py-4 sm:py-3 outline-none focus:border-accent-mid disabled:opacity-50 transition"
         />
         <button
           type="submit"
           disabled={pin.length !== 4 || submitting}
-          className="w-full md:w-auto bg-ink text-white rounded-full px-5 py-3 md:py-2 font-medium hover:bg-accent transition disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full md:w-auto bg-ink text-white rounded-full px-5 py-4 sm:py-3 font-medium hover:bg-accent transition disabled:opacity-50 flex items-center justify-center gap-2 min-h-[44px] md:min-h-auto"
         >
           {submitting ? (
             <>
