@@ -28,7 +28,6 @@ export default function PinVerify({
     if (res && 'error' in res) {
       setError({
         message: res.error ?? 'Something went wrong',
-        hint: res.hint,
       });
     } else {
       setPin('');

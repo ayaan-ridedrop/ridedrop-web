@@ -38,7 +38,6 @@ export default function ReviewForm({
     if (res && 'error' in res) {
       setError({
         message: res.error ?? 'Something went wrong',
-        hint: res.hint,
       });
     } else {
       setDone(true);
