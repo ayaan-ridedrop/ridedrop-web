@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { getFriendlyErrorMessage } from '@/lib/error-messages';
 
 const schema = z.object({
   jobId: z.string().uuid(),
@@ -18,12 +19,15 @@ export async function submitBid(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+    const friendly = getFriendlyErrorMessage(parsed.error.errors[0]?.message ?? 'Invalid input');
+    return { error: friendly.message, hint: friendly.hint };
   }
 
   const supabase = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'Not signed in' };
+  if (!user) {
+    return { error: 'You\'re not signed in. Please log in to bid.', action: 'Log in' };
+  }
 
   // Fetch the job to check it's still open
   const { data: job } = await supabase
@@ -32,8 +36,14 @@ export async function submitBid(formData: FormData) {
     .eq('id', parsed.data.jobId)
     .maybeSingle();
 
-  if (!job) return { error: 'Job not found' };
-  if (job.status !== 'open') return { error: 'Job is no longer open' };
+  if (!job) {
+    const friendly = getFriendlyErrorMessage('job not found');
+    return { error: friendly.message, hint: friendly.hint };
+  }
+  if (job.status !== 'open') {
+    const friendly = getFriendlyErrorMessage('job is no longer open');
+    return { error: friendly.message, hint: friendly.hint };
+  }
 
   // Verify the journey belongs to this carrier and is listed
   const { data: journey } = await supabase
@@ -42,10 +52,17 @@ export async function submitBid(formData: FormData) {
     .eq('id', parsed.data.journeyId)
     .maybeSingle();
 
-  if (!journey) return { error: 'Journey not found' };
-  if (journey.carrier_id !== user.id) return { error: 'This is not your journey' };
+  if (!journey) {
+    const friendly = getFriendlyErrorMessage('journey not found');
+    return { error: friendly.message, hint: friendly.hint };
+  }
+  if (journey.carrier_id !== user.id) {
+    const friendly = getFriendlyErrorMessage('this is not your journey');
+    return { error: friendly.message, hint: friendly.hint };
+  }
   if (journey.status !== 'listed' && journey.status !== 'in_progress') {
-    return { error: 'This journey is not available' };
+    const friendly = getFriendlyErrorMessage('this journey is not available');
+    return { error: friendly.message, hint: friendly.hint };
   }
 
   // Insert or replace the bid
@@ -57,7 +74,10 @@ export async function submitBid(formData: FormData) {
     status: 'pending',
   });
 
-  if (err) return { error: err.message };
+  if (err) {
+    const friendly = getFriendlyErrorMessage(err.message);
+    return { error: friendly.message, hint: friendly.hint };
+  }
 
   revalidatePath(`/jobs/${parsed.data.jobId}`);
   return { ok: true };

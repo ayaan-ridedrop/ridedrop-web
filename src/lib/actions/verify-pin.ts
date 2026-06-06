@@ -6,11 +6,12 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
+import { getFriendlyErrorMessage } from '@/lib/error-messages';
 
 const schema = z.object({
   bookingId: z.string().uuid(),
   kind: z.enum(['pickup', 'delivery']),
-  pin: z.string().regex(/^\d{4}$/, 'PIN must be 4 digits'),
+  pin: z.string().regex(/^\d{4}$/, 'PIN must be exactly 4 digits'),
 });
 
 export async function verifyPin(formData: FormData) {
@@ -19,11 +20,16 @@ export async function verifyPin(formData: FormData) {
     kind: formData.get('kind'),
     pin: formData.get('pin'),
   });
-  if (!parsed.success) return { error: parsed.error.errors[0]?.message ?? 'Invalid' };
+  if (!parsed.success) {
+    const friendly = getFriendlyErrorMessage(parsed.error.errors[0]?.message ?? 'Invalid PIN');
+    return { error: friendly.message, hint: friendly.hint };
+  }
 
   const supabase  = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'Not signed in' };
+  if (!user) {
+    return { error: 'You\'re not signed in.', action: 'Log in' };
+  }
 
   const { data: booking } = await supabase
     .from('bookings')
@@ -31,17 +37,28 @@ export async function verifyPin(formData: FormData) {
     .eq('id', parsed.data.bookingId)
     .maybeSingle();
 
-  if (!booking) return { error: 'Booking not found' };
-  if (booking.carrier_id !== user.id) return { error: 'Only the carrier verifies PINs' };
+  if (!booking) {
+    const friendly = getFriendlyErrorMessage('booking not found');
+    return { error: friendly.message, hint: friendly.hint };
+  }
+  if (booking.carrier_id !== user.id) {
+    return { error: 'Only the delivery carrier can verify PINs.' };
+  }
 
   // Pickup PIN requires payment to be made first
   if (parsed.data.kind === 'pickup' && !booking.stripe_payment_intent_id) {
-    return { error: 'Payment must be made before pickup. Ask the sender to pay.' };
+    return {
+      error: 'Payment hasn\'t been made yet.',
+      hint: 'Ask the sender to complete payment before pickup. You\'ll see a "Pay now" button in the booking.',
+    };
   }
 
   const correctPin = parsed.data.kind === 'pickup' ? booking.pickup_pin : booking.delivery_pin;
   if (parsed.data.pin !== correctPin) {
-    return { error: 'PIN does not match — ask the sender to re-read it' };
+    return {
+      error: 'PIN doesn\'t match.',
+      hint: 'Ask the sender to re-read the code. Check for typos — it\'s exactly 4 digits.',
+    };
   }
 
   // State machine — pickup PIN advances accepted → picked_up. Delivery PIN
@@ -50,19 +67,28 @@ export async function verifyPin(formData: FormData) {
   const update: Record<string, any> = {};
   if (parsed.data.kind === 'pickup') {
     if (!['accepted', 'picked_up'].includes(booking.status)) {
-      return { error: `Cannot collect while booking is ${booking.status}` };
+      return {
+        error: `Can't pick up right now.`,
+        hint: `Booking is ${booking.status}. It should be "accepted" or "picked up".`,
+      };
     }
     update.status = 'picked_up';
   } else {
     if (!['picked_up', 'in_transit', 'delivered'].includes(booking.status)) {
-      return { error: `Cannot deliver while booking is ${booking.status}` };
+      return {
+        error: `Can't complete delivery right now.`,
+        hint: `Booking is ${booking.status}. Pick it up first, then deliver.`,
+      };
     }
     update.status = 'delivered';
     update.auto_release_at = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
   }
 
   const { error: err } = await supabase.from('bookings').update(update).eq('id', booking.id);
-  if (err) return { error: err.message };
+  if (err) {
+    const friendly = getFriendlyErrorMessage(err.message);
+    return { error: friendly.message, hint: friendly.hint };
+  }
 
   revalidatePath(`/bookings/${booking.id}`);
   return { ok: true };

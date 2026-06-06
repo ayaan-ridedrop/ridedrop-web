@@ -12,7 +12,7 @@ export default function BidForm({
 }) {
   const [selectedJourneyId, setSelectedJourneyId] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; hint?: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -29,11 +29,14 @@ export default function BidForm({
     setSubmitting(false);
 
     if (res && 'error' in res) {
-      setError(res.error ?? 'Something went wrong');
+      setError({
+        message: res.error ?? 'Something went wrong',
+        hint: res.hint,
+      });
     } else {
       setAmount('');
       setSelectedJourneyId('');
-      alert('Bid submitted!');
+      alert('Bid submitted! ✅');
     }
   }
 
@@ -88,7 +91,12 @@ export default function BidForm({
         {submitting ? 'Submitting...' : 'Submit bid'}
       </button>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && (
+        <div className="bg-red-50 border border-red-300 rounded-lg p-3">
+          <p className="text-sm font-medium text-red-700">{error.message}</p>
+          {error.hint && <p className="text-xs text-red-600 mt-1">{error.hint}</p>}
+        </div>
+      )}
     </form>
   );
 }

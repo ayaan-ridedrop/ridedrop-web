@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { getFriendlyErrorMessage } from '@/lib/error-messages';
 
 const schema = z.object({
   bidId: z.string().uuid(),
@@ -14,12 +15,15 @@ export async function acceptBid(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.errors[0]?.message ?? 'Invalid input' };
+    const friendly = getFriendlyErrorMessage(parsed.error.errors[0]?.message ?? 'Invalid input');
+    return { error: friendly.message, hint: friendly.hint };
   }
 
   const supabase = createClient() as any;
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: 'Not signed in' };
+  if (!user) {
+    return { error: 'You\'re not signed in. Please log in.', action: 'Log in' };
+  }
 
   // Fetch the bid
   const { data: bid } = await supabase
@@ -28,7 +32,10 @@ export async function acceptBid(formData: FormData) {
     .eq('id', parsed.data.bidId)
     .maybeSingle();
 
-  if (!bid) return { error: 'Bid not found' };
+  if (!bid) {
+    const friendly = getFriendlyErrorMessage('bid not found');
+    return { error: friendly.message, hint: friendly.hint };
+  }
 
   // Fetch the job to verify sender and journey
   const { data: job } = await supabase
@@ -37,9 +44,17 @@ export async function acceptBid(formData: FormData) {
     .eq('id', bid.job_id)
     .maybeSingle();
 
-  if (!job) return { error: 'Job not found' };
-  if (job.sender_id !== user.id) return { error: 'Only the sender can accept bids' };
-  if (job.status !== 'open') return { error: 'Job is no longer open' };
+  if (!job) {
+    const friendly = getFriendlyErrorMessage('job not found');
+    return { error: friendly.message, hint: friendly.hint };
+  }
+  if (job.sender_id !== user.id) {
+    return { error: 'Only the job poster can accept bids.' };
+  }
+  if (job.status !== 'open') {
+    const friendly = getFriendlyErrorMessage('job is no longer open');
+    return { error: friendly.message, hint: friendly.hint };
+  }
 
   // Create a booking with the accepted bid amount + journey
   const { data: booking, error: bookingErr } = await supabase
@@ -55,7 +70,10 @@ export async function acceptBid(formData: FormData) {
     })
     .select();
 
-  if (bookingErr) return { error: bookingErr.message };
+  if (bookingErr) {
+    const friendly = getFriendlyErrorMessage(bookingErr.message);
+    return { error: friendly.message, hint: friendly.hint };
+  }
 
   // Mark this bid as accepted, others as rejected
   await supabase
