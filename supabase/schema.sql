@@ -618,13 +618,15 @@ end;
 $$ language plpgsql security definer;
 
 -- ── DELETE EXPIRED JOBS FROM HISTORY ─────────────────────────────
--- Remove jobs 48+ hours after their deadline has passed.
--- Jobs disappear from history 48 hours after they were supposed to arrive.
+-- Remove incomplete jobs 48+ hours after their deadline has passed.
+-- Completed jobs are kept forever (in history/Completed tab).
+-- Only delete jobs that are open/matched/cancelled (not completed).
 create or replace function public.delete_expired_jobs_from_history()
 returns void as $$
 begin
   delete from public.jobs j
   where j.must_arrive_by is not null
-    and j.must_arrive_by < NOW() - INTERVAL '48 hours';
+    and j.must_arrive_by < NOW() - INTERVAL '48 hours'
+    and j.status != 'completed';
 end;
 $$ language plpgsql security definer;
