@@ -240,15 +240,40 @@ create table if not exists public.waitlist (
 );
 
 -- ── INDEXES ───────────────────────────────────────────────────────
+-- Route + time indexes
 create index if not exists journeys_route_idx on public.journeys (from_station, to_station, departure_at);
 create index if not exists journeys_status_idx on public.journeys (status) where status = 'listed';
+create index if not exists journeys_carrier_status_idx on public.journeys (carrier_id, status, departure_at);
+create index if not exists journeys_departure_idx on public.journeys (departure_at) where status in ('listed', 'in_progress');
+
 create index if not exists jobs_route_idx on public.jobs (from_station, to_station, must_arrive_by);
 create index if not exists jobs_status_idx on public.jobs (status) where status = 'open';
+create index if not exists jobs_sender_status_idx on public.jobs (sender_id, status, created_at);
+create index if not exists jobs_deadline_idx on public.jobs (must_arrive_by) where status != 'completed';
+
+-- User-centric lookups
 create index if not exists bookings_carrier_idx on public.bookings (carrier_id, status);
 create index if not exists bookings_sender_idx on public.bookings (sender_id, status);
+create index if not exists bookings_created_idx on public.bookings (created_at desc);
+create index if not exists journeys_carrier_created_idx on public.journeys (carrier_id, created_at desc);
+create index if not exists jobs_sender_created_idx on public.jobs (sender_id, created_at desc);
+
+-- Chat & messaging
 create index if not exists messages_booking_idx on public.messages (booking_id, created_at);
+create index if not exists messages_sender_idx on public.messages (sender_id, created_at desc);
+
+-- Bidding
 create index if not exists bids_job_idx on public.bids (job_id, status);
-create index if not exists bids_carrier_idx on public.bids (carrier_id, created_at);
+create index if not exists bids_carrier_idx on public.bids (carrier_id, created_at desc);
+create index if not exists bids_journey_idx on public.bids (journey_id, status);
+
+-- Reviews & ratings
+create index if not exists reviews_subject_idx on public.reviews (subject_id, created_at desc);
+create index if not exists reviews_booking_idx on public.reviews (booking_id);
+
+-- Disputes
+create index if not exists disputes_status_idx on public.disputes (status) where status in ('open', 'reviewing');
+create index if not exists disputes_booking_idx on public.disputes (booking_id);
 
 -- ════════════════════════════════════════════════════════════════════
 -- ROW-LEVEL SECURITY
