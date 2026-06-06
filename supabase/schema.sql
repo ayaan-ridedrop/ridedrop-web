@@ -616,3 +616,14 @@ begin
     );
 end;
 $$ language plpgsql security definer;
+
+-- ── DELETE INCOMPLETE OLD JOBS ────────────────────────────────────
+-- Remove jobs that are incomplete (open/matched) and older than 48h.
+create or replace function public.delete_incomplete_old_jobs()
+returns void as $$
+begin
+  delete from public.jobs j
+  where j.status in ('open', 'matched')
+    and j.created_at < NOW() - INTERVAL '48 hours';
+end;
+$$ language plpgsql security definer;

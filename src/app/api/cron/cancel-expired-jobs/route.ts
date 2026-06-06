@@ -38,7 +38,11 @@ export async function POST(req: Request) {
     const { error: cleanupErr } = await supabase.rpc('cleanup_orphaned_jobs');
     if (cleanupErr) console.warn('[cron] cleanup warning:', cleanupErr);
 
-    return Response.json({ success: true, message: 'Expired jobs cancelled, matched jobs completed, orphaned jobs cleaned' });
+    // Delete incomplete old jobs (48+ hours old)
+    const { error: deleteErr } = await supabase.rpc('delete_incomplete_old_jobs');
+    if (deleteErr) console.warn('[cron] delete warning:', deleteErr);
+
+    return Response.json({ success: true, message: 'Expired jobs cancelled, matched jobs completed, orphaned jobs cleaned, old incomplete jobs deleted' });
   } catch (err: any) {
     console.error('[cron] error:', err);
     return Response.json({ error: err.message }, { status: 500 });
