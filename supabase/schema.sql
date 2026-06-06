@@ -617,13 +617,14 @@ begin
 end;
 $$ language plpgsql security definer;
 
--- ── DELETE INCOMPLETE OLD JOBS ────────────────────────────────────
--- Remove jobs that are incomplete (open/matched) and older than 48h.
-create or replace function public.delete_incomplete_old_jobs()
+-- ── DELETE EXPIRED JOBS FROM HISTORY ─────────────────────────────
+-- Remove jobs 48+ hours after their deadline has passed.
+-- Jobs disappear from history 48 hours after they were supposed to arrive.
+create or replace function public.delete_expired_jobs_from_history()
 returns void as $$
 begin
   delete from public.jobs j
-  where j.status in ('open', 'matched')
-    and j.created_at < NOW() - INTERVAL '48 hours';
+  where j.must_arrive_by is not null
+    and j.must_arrive_by < NOW() - INTERVAL '48 hours';
 end;
 $$ language plpgsql security definer;
