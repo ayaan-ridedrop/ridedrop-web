@@ -96,7 +96,7 @@ export default function NewJourneyForm() {
     setSubmitting(false);
     if (err) {
       const friendlyError = getFriendlyErrorMessage(err.message);
-      setError(friendlyError);
+      setError(friendlyError.message);
       console.error('[new journey] error:', err);
       return;
     }
