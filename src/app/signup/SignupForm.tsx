@@ -117,27 +117,8 @@ export default function SignupForm() {
       return;
     }
 
-    // Get public URL for the photo
-    const { data: publicUrl } = supabase.storage
-      .from('profile-photos')
-      .getPublicUrl(fileName);
-
-    // Update profile with photo URL (profile was auto-created by Supabase trigger)
-    const { error: updateErr } = await supabase
-      .from('profiles')
-      .update({
-        avatar_url: publicUrl?.publicUrl,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', userId);
-
+    // Photo uploaded successfully - just proceed
     setLoading(false);
-
-    if (updateErr) {
-      setError('Failed to update profile photo. Please try again.');
-      console.error('[profile update] error:', updateErr);
-      return;
-    }
 
     // Redirect to verify email page
     router.push('/auth/verify-email?email=' + encodeURIComponent(email));
