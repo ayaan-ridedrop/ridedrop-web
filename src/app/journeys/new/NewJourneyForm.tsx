@@ -96,8 +96,13 @@ export default function NewJourneyForm() {
     setSubmitting(false);
     if (err) {
       const friendlyError = getFriendlyErrorMessage(err.message);
-      setError(friendlyError.message);
-      console.error('[new journey] error:', err);
+      // Better error message for constraint violations
+      let errorMsg = friendlyError.message;
+      if (err.message?.includes('check')) {
+        errorMsg = 'Please fill in all required fields correctly (must arrive after departure).';
+      }
+      setError(errorMsg);
+      console.error('[new journey] error details:', err.message, err);
       return;
     }
     router.push('/dashboard');

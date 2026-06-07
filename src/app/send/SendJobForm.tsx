@@ -72,8 +72,15 @@ export default function SendJobForm() {
     setSubmitting(false);
     if (err) {
       const friendlyError = getFriendlyErrorMessage(err.message);
-      setError(friendlyError.message);
-      console.error('[send job] error:', err);
+      // Better error message for constraint violations
+      let errorMsg = friendlyError.message;
+      if (err.message?.includes('declaration')) {
+        errorMsg = 'You must agree to the declaration before posting a job.';
+      } else if (err.message?.includes('check')) {
+        errorMsg = 'Please fill in all required fields correctly.';
+      }
+      setError(errorMsg);
+      console.error('[send job] error details:', err.message, err);
       return;
     }
     router.push('/dashboard');
