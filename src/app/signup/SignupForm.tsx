@@ -55,7 +55,7 @@ export default function SignupForm() {
     }
 
     if (!photoFile) {
-      setError('Please upload a profile photo.');
+      setError('Profile photo is required. Please upload a clear photo of your face to continue.');
       setLoading(false);
       return;
     }
@@ -217,7 +217,9 @@ export default function SignupForm() {
       </div>
 
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-ink">Profile photo</label>
+        <label className="block text-sm font-medium text-ink">
+          Profile photo <span className="text-red-600">*</span> <span className="text-xs font-normal text-red-600">(Required)</span>
+        </label>
         <p className="text-xs text-ink-muted mb-2">Upload a clear photo of your face for verification</p>
         <input
           ref={fileInputRef}
