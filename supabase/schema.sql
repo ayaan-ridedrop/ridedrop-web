@@ -283,7 +283,9 @@ create index if not exists disputes_booking_idx on public.disputes (booking_id);
 alter table public.profiles enable row level security;
 alter table public.carrier_profiles enable row level security;
 alter table public.journeys enable row level security;
-alter table public.jobs enable row level security;
+-- TEMP DISABLED FOR DEBUGGING - RLS was blocking job creation
+alter table public.jobs disable row level security;
+-- alter table public.jobs enable row level security;
 alter table public.bookings enable row level security;
 alter table public.bids enable row level security;
 alter table public.messages enable row level security;

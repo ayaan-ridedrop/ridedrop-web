@@ -52,6 +52,8 @@ export default function SendJobForm() {
       return;
     }
 
+    console.log('[send job] submitting with user_id:', user.id);
+
     const { error: err } = await supabase.from('jobs').insert({
       sender_id: user.id,
       from_station: fromStation,
