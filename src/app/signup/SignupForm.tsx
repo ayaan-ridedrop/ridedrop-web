@@ -122,22 +122,19 @@ export default function SignupForm() {
       .from('profile-photos')
       .getPublicUrl(fileName);
 
-    // Create/update profile with photo URL
+    // Update profile with photo URL (profile was auto-created by Supabase trigger)
     const { error: updateErr } = await supabase
       .from('profiles')
-      .upsert({
-        id: userId,
-        first_name: firstName,
-        last_name: lastName,
+      .update({
         avatar_url: publicUrl?.publicUrl,
-        role: 'sender',
         updated_at: new Date().toISOString(),
-      });
+      })
+      .eq('id', userId);
 
     setLoading(false);
 
     if (updateErr) {
-      setError('Failed to update profile. Please try again.');
+      setError('Failed to update profile photo. Please try again.');
       console.error('[profile update] error:', updateErr);
       return;
     }

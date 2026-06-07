@@ -291,6 +291,30 @@ alter table public.reviews enable row level security;
 alter table public.disputes enable row level security;
 alter table public.waitlist enable row level security;
 
+-- ── AUTO-CREATE PROFILE ON SIGNUP ──
+-- Trigger: When new user is created in auth.users, automatically create profile row
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, first_name, last_name, role)
+  values (
+    new.id,
+    new.raw_user_meta_data->>'first_name',
+    new.raw_user_meta_data->>'last_name',
+    'sender'
+  );
+  return new;
+exception when others then
+  return new; -- Don't fail signup if profile creation fails
+end;
+$$ language plpgsql security definer;
+
+-- Drop and recreate trigger
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
 -- profiles: anyone signed in can read (we hide sensitive fields client-side), only self can write
 drop policy if exists "profiles_read" on public.profiles;
 create policy "profiles_read" on public.profiles for select using (true);
