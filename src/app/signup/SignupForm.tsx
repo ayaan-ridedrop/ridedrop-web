@@ -122,14 +122,17 @@ export default function SignupForm() {
       .from('profile-photos')
       .getPublicUrl(fileName);
 
-    // Update profile with photo URL
+    // Create/update profile with photo URL
     const { error: updateErr } = await supabase
       .from('profiles')
-      .update({
+      .upsert({
+        id: userId,
+        first_name: firstName,
+        last_name: lastName,
         avatar_url: publicUrl?.publicUrl,
+        role: 'sender',
         updated_at: new Date().toISOString(),
-      })
-      .eq('id', userId);
+      });
 
     setLoading(false);
 
