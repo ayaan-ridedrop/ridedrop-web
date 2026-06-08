@@ -22,6 +22,13 @@ export function getFriendlyErrorMessage(error: string | null): FriendlyError {
       action: 'Forgot password? Reset it here.',
     };
   }
+  if (errorLower.includes('email rate limit')) {
+    return {
+      message: 'Too many signup attempts with this email.',
+      hint: 'Try signing up with a different email address, or wait 15-30 minutes before trying again.',
+      action: 'Use a different email to sign up now',
+    };
+  }
   if (errorLower.includes('email not confirmed')) {
     return {
       message: 'Your email hasn\'t been verified yet.',
