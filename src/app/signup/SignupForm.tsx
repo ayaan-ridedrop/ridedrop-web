@@ -54,12 +54,6 @@ export default function SignupForm() {
       return;
     }
 
-    if (!photoFile) {
-      setError('Profile photo is required. Please upload a clear photo of your face to continue.');
-      setLoading(false);
-      return;
-    }
-
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       setLoading(false);
@@ -101,23 +95,22 @@ export default function SignupForm() {
       return;
     }
 
-    // Upload photo to Supabase Storage
-    const fileName = `${userId}-${Date.now()}.jpg`;
-    const { error: uploadErr } = await supabase.storage
-      .from('profile-photos')
-      .upload(fileName, photoFile, {
-        cacheControl: '3600',
-        upsert: false,
-      });
+    // Upload photo to Supabase Storage (optional for now)
+    if (photoFile) {
+      const fileName = `${userId}-${Date.now()}.jpg`;
+      const { error: uploadErr } = await supabase.storage
+        .from('profile-photos')
+        .upload(fileName, photoFile, {
+          cacheControl: '3600',
+          upsert: false,
+        });
 
-    if (uploadErr) {
-      setLoading(false);
-      setError('Failed to upload photo. Please try again.');
-      console.error('[photo upload] error:', uploadErr);
-      return;
+      if (uploadErr) {
+        console.warn('[photo upload] warning:', uploadErr);
+        // Don't fail - photo is optional for now
+      }
     }
 
-    // Photo uploaded successfully - just proceed
     setLoading(false);
 
     // Redirect to verify email page
@@ -199,9 +192,9 @@ export default function SignupForm() {
 
       <div className="space-y-2">
         <label className="block text-sm font-medium text-ink">
-          Profile photo <span className="text-red-600">*</span> <span className="text-xs font-normal text-red-600">(Required)</span>
+          Profile photo <span className="text-xs font-normal text-ink-muted">(Optional)</span>
         </label>
-        <p className="text-xs text-ink-muted mb-2">Upload a clear photo of your face for verification</p>
+        <p className="text-xs text-ink-muted mb-2">Upload a clear photo of your face for verification (optional for now)</p>
         <input
           ref={fileInputRef}
           type="file"
@@ -220,7 +213,7 @@ export default function SignupForm() {
 
       <button
         type="submit"
-        disabled={loading || !photoFile}
+        disabled={loading}
         className="w-full bg-ink text-white rounded-full px-6 py-3.5 font-medium hover:bg-accent transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? 'Creating account...' : 'Create account'}
