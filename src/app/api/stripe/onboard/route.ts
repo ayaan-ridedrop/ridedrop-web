@@ -1,10 +1,5 @@
-// src/app/api/stripe/onboard/route.ts
-// POST: carrier starts (or resumes) Stripe Express onboarding.
-// Returns { url } — redirect the carrier there. Stripe sends them back
-// to /dashboard?onboarding=complete (change below if you want).
-//
-// Wire-up: carrier dashboard shows a "Set up payouts" button when
-// profile.stripe_onboarding_complete is false → POST here → window.location = url.
+// src/app/api/stripe/onboard/route.ts  (v3 — carrier_profiles)
+// POST: carrier starts/resumes Stripe Express onboarding.
 
 import { NextResponse } from 'next/server';
 import { stripe, supabaseAdmin } from '@/lib/stripe-server';
@@ -15,13 +10,20 @@ export async function POST() {
   if (!user) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
   const db = supabaseAdmin();
-  const { data: profile } = await db
-    .from('profiles')
-    .select('stripe_account_id')
+  const { data: cp } = await db
+    .from('carrier_profiles')
+    .select('stripe_connect_account_id')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
 
-  let accountId = profile?.stripe_account_id ?? null;
+  if (!cp) {
+    return NextResponse.json(
+      { error: 'No carrier profile — complete carrier signup first' },
+      { status: 409 },
+    );
+  }
+
+  let accountId = cp.stripe_connect_account_id ?? null;
 
   if (!accountId) {
     const account = await stripe.accounts.create({
@@ -33,7 +35,10 @@ export async function POST() {
       metadata: { profile_id: user.id },
     });
     accountId = account.id;
-    await db.from('profiles').update({ stripe_account_id: accountId }).eq('id', user.id);
+    await db
+      .from('carrier_profiles')
+      .update({ stripe_connect_account_id: accountId, updated_at: new Date().toISOString() })
+      .eq('id', user.id);
   }
 
   const origin = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
