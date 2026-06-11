@@ -9,6 +9,8 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { notifyDelivered } from '@/lib/actions/notify-booking-event';
+import { getFriendlyErrorMessage } from '@/lib/error-messages';
 
 type Stage = 'loading' | 'pickup' | 'delivery' | 'done' | 'blocked';
 
@@ -127,9 +129,16 @@ export default function HandoverPage() {
         router.push('/dashboard');
       } else {
         setStage('done');
+        // email sender (dispute window) + carrier (payout pending) — fire-and-forget
+        notifyDelivered(bookingId).catch(() => {});
       }
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Something went wrong. Try again.');
+      const raw =
+        e && typeof e === 'object' && 'message' in e
+          ? String((e as { message: unknown }).message)
+          : 'Something went wrong. Try again.';
+      const friendly = getFriendlyErrorMessage(raw);
+      setError(friendly.message || raw);
     } finally {
       setBusy(false);
     }

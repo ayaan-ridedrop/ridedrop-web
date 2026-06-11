@@ -8,6 +8,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { notifyPinsGenerated } from '@/lib/actions/notify-booking-event';
 
 export default function BookingPins({ bookingId }: { bookingId: string }) {
   const [pins, setPins] = useState<{ pickup_pin: string; delivery_pin: string } | null>(null);
@@ -23,6 +24,8 @@ export default function BookingPins({ bookingId }: { bookingId: string }) {
       });
       if (rpcErr) throw rpcErr;
       setPins(data as { pickup_pin: string; delivery_pin: string });
+      // tell the carrier pickup is ready (fire-and-forget)
+      notifyPinsGenerated(bookingId).catch(() => {});
     } catch (e: unknown) {
       const msg =
         e && typeof e === 'object' && 'message' in e

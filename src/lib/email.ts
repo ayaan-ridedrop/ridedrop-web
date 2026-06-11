@@ -169,4 +169,80 @@ export const emails = {
       `),
     });
   },
+
+  pinsGenerated({
+    to,
+    carrierName,
+    route,
+    bookingUrl,
+  }: {
+    to: string;
+    carrierName: string;
+    route: string;
+    bookingUrl: string;
+  }) {
+    return sendEmail({
+      to,
+      subject: `Ready for pickup — ${route}`,
+      html: wrap(`
+        <h2 style="font-family:Syne,sans-serif;font-weight:800;font-size:24px;margin:0 0 8px;">
+          The sender is ready for pickup.
+        </h2>
+        <p>Hi ${carrierName},</p>
+        <p>Handover PINs have been generated for your <strong>${route}</strong> delivery. At pickup, ask the sender for their <strong>pickup PIN</strong> and confirm it in the app with a photo of the package.</p>
+        <p><a href="${bookingUrl}" style="display:inline-block;background:#0D0D0D;color:#fff;padding:12px 24px;border-radius:100px;text-decoration:none;font-weight:500;">Open booking →</a></p>
+      `),
+    });
+  },
+
+  packageDelivered({
+    to,
+    senderName,
+    route,
+    bookingUrl,
+  }: {
+    to: string;
+    senderName: string;
+    route: string;
+    bookingUrl: string;
+  }) {
+    return sendEmail({
+      to,
+      subject: `Delivered — ${route}`,
+      html: wrap(`
+        <h2 style="font-family:Syne,sans-serif;font-weight:800;font-size:24px;margin:0 0 8px;">
+          Your package was delivered.
+        </h2>
+        <p>Hi ${senderName},</p>
+        <p>The carrier confirmed delivery of your <strong>${route}</strong> package with the recipient's PIN and a photo.</p>
+        <p>If anything is wrong, you have <strong>24 hours</strong> to raise an issue from the booking page — after that, payment is released to the carrier.</p>
+        <p><a href="${bookingUrl}" style="display:inline-block;background:#0D0D0D;color:#fff;padding:12px 24px;border-radius:100px;text-decoration:none;font-weight:500;">View delivery proof →</a></p>
+      `),
+    });
+  },
+
+  payoutSent({
+    to,
+    carrierName,
+    route,
+    amountGbp,
+  }: {
+    to: string;
+    carrierName: string;
+    route: string;
+    amountGbp: number;
+  }) {
+    return sendEmail({
+      to,
+      subject: `£${amountGbp.toFixed(2)} sent — ${route}`,
+      html: wrap(`
+        <h2 style="font-family:Syne,sans-serif;font-weight:800;font-size:24px;margin:0 0 8px;color:#1B4332;">
+          You've been paid.
+        </h2>
+        <p>Hi ${carrierName},</p>
+        <p>Your <strong>£${amountGbp.toFixed(2)}</strong> for the <strong>${route}</strong> delivery has been sent to your bank via Stripe. Depending on your bank it can take 1–2 business days to appear.</p>
+        <p>Thanks for carrying with RideDrop.</p>
+      `),
+    });
+  },
 };

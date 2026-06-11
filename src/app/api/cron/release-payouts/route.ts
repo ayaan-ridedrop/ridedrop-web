@@ -16,6 +16,7 @@
 
 import { NextResponse } from 'next/server';
 import { getStripeServer, supabaseAdmin } from '@/lib/stripe-server';
+import { emails } from '@/lib/email';
 
 export async function POST(req: Request) {
   const auth = req.headers.get('authorization');
@@ -105,6 +106,29 @@ export async function POST(req: Request) {
       }
 
       results.push({ booking: b.id, ok: true, detail: `transferred ${amount}p (${transfer.id})` });
+
+      // "you've been paid" email — failures only log, never block the batch
+      try {
+        const [{ data: job }, { data: carrier }] = await Promise.all([
+          db
+            .from('bookings')
+            .select('job_id, jobs!inner(from_station, to_station)')
+            .eq('id', b.id)
+            .single()
+            .then((r: any) => ({ data: r.data?.jobs ?? null })),
+          db.from('profiles').select('email, first_name').eq('id', b.carrier_id).single(),
+        ]);
+        if (carrier?.email) {
+          await emails.payoutSent({
+            to: carrier.email,
+            carrierName: carrier.first_name ?? 'there',
+            route: job ? `${job.from_station} → ${job.to_station}` : 'your RideDrop delivery',
+            amountGbp: amount / 100,
+          });
+        }
+      } catch (err) {
+        console.error(`[release-payouts] payout email failed for ${b.id}:`, err);
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(`[release-payouts] booking ${b.id} failed:`, msg);

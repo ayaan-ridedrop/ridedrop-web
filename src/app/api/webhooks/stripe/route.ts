@@ -10,6 +10,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { getStripeServer, supabaseAdmin } from '@/lib/stripe-server';
+import { emails } from '@/lib/email';
+
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://ridedrop.co.uk';
+
+/** Email the carrier that escrow is funded. Failures only log — the
+ *  webhook must still return 200 so Stripe doesn't retry forever. */
+async function emailCarrierPaymentReceived(db: any, bookingId: string) {
+  try {
+    const { data: b } = await db
+      .from('bookings')
+      .select('id, carrier_id, job_id')
+      .eq('id', bookingId)
+      .single();
+    if (!b) return;
+    const [{ data: job }, { data: carrier }] = await Promise.all([
+      db.from('jobs').select('from_station, to_station').eq('id', b.job_id).single(),
+      db.from('profiles').select('email, first_name').eq('id', b.carrier_id).single(),
+    ]);
+    if (!job || !carrier?.email) return;
+    await emails.paymentReceived({
+      to: carrier.email,
+      carrierName: carrier.first_name ?? 'there',
+      route: `${job.from_station} → ${job.to_station}`,
+      bookingUrl: `${SITE}/bookings/${b.id}`,
+    });
+  } catch (err) {
+    console.error('[webhook] paymentReceived email failed:', err);
+  }
+}
 
 export async function POST(req: NextRequest) {
   const sig = req.headers.get('stripe-signature');
@@ -82,6 +111,8 @@ export async function POST(req: NextRequest) {
           .update({ paid_at: new Date().toISOString(), updated_at: new Date().toISOString() })
           .eq('id', b.id)
           .is('paid_at', null);
+
+        await emailCarrierPaymentReceived(db, b.id);
         break;
       }
 
