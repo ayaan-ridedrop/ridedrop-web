@@ -67,6 +67,7 @@ export default function SendJobForm() {
         ? Number(fd.get('weight_kg'))
         : null,
       declared_value_pence: Math.round(Number(fd.get('declared_value') ?? 0) * 100),
+      max_budget_pence: Math.round(Number(fd.get('max_budget') ?? 0) * 100),
       declaration_accepted: true,
       status: 'open',
     });
@@ -169,17 +170,30 @@ export default function SendJobForm() {
           />
           <p className="text-xs text-ink-soft mt-1">1kg ≈ bag of sugar or small shoe box</p>
         </Field>
-        <Field label="Declared value (£)">
+        <Field label="Max budget (£)">
           <input
-            name="declared_value"
+            name="max_budget"
             type="number"
             min="0"
-            placeholder="0"
+            step="0.01"
+            placeholder="50"
+            required
             disabled={submitting}
             className="w-full border border-rail rounded-xl px-4 py-3 outline-none focus:border-accent-mid disabled:opacity-50"
           />
         </Field>
       </div>
+
+      <Field label="Declared value (£)">
+        <input
+          name="declared_value"
+          type="number"
+          min="0"
+          placeholder="0"
+          disabled={submitting}
+          className="w-full border border-rail rounded-xl px-4 py-3 outline-none focus:border-accent-mid disabled:opacity-50"
+        />
+      </Field>
 
 
       <label className={`flex items-start gap-3 cursor-pointer rounded-xl p-4 border transition ${

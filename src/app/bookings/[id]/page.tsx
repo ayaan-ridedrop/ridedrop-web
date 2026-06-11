@@ -3,12 +3,11 @@ import { redirect, notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
 import ChatThread from '@/components/ChatThread';
-import PhotoUpload from '@/components/PhotoUpload';
-import PinVerify from '@/components/PinVerify';
+import BookingPins from '@/components/BookingPins';
 import ReviewForm from '@/components/ReviewForm';
-import DisputeForm from '@/components/DisputeForm';
+import DisputeButton from '@/components/DisputeButton';
 import ConfirmDeliveryButton from './ConfirmDeliveryButton';
-import PayButton from './PayButton';
+import PaymentForm from '@/components/PaymentForm';
 
 export default async function BookingDetailPage({
   params,
@@ -177,66 +176,74 @@ export default async function BookingDetailPage({
             )}
           </div>
 
-          {/* PAY (sender, while accepted + unpaid) */}
-          {youAreSender && booking.status === 'accepted' && !booking.stripe_payment_intent_id && (
-            <PayButton bookingId={booking.id} priceGbp={booking.agreed_price_pence / 100} />
+          {/* PAY (sender, while accepted + unpaid). paid_at is set by the
+              Stripe webhook — it is the only source of truth for "paid".
+              (stripe_payment_intent_id is set when the form OPENS, so it
+              must not be used to decide whether payment is complete.) */}
+          {youAreSender && booking.status === 'accepted' && !booking.paid_at && (
+            <div className="bg-white border border-rail rounded-2xl p-5">
+              <h3 className="font-display font-bold text-lg mb-3">
+                Pay £{(booking.agreed_price_pence / 100).toFixed(2)} to confirm
+              </h3>
+              <PaymentForm
+                bookingId={booking.id}
+                amountPence={booking.agreed_price_pence}
+              />
+            </div>
           )}
-          {youAreSender && booking.stripe_payment_intent_id && (
+          {youAreSender && booking.paid_at && (
             <div className="bg-accent-light border border-accent-mid rounded-2xl px-5 py-3 text-sm text-accent">
               Paid - funds held in escrow until delivery confirmed
             </div>
           )}
-          {youAreCarrier && !booking.stripe_payment_intent_id && booking.status === 'accepted' && (
+          {youAreCarrier && !booking.paid_at && booking.status === 'accepted' && (
             <div className="bg-amber-50 border border-amber-300 rounded-2xl px-5 py-3 text-sm text-amber-900">
               Waiting for the sender to pay before you collect.
             </div>
           )}
 
-          {/* PINs FIRST */}
-          {['accepted', 'picked_up', 'in_transit', 'delivered'].includes(booking.status) && (
+          {/* HANDOFF PINs — secure v3 flow. PINs are stored hashed; the
+              sender sees them exactly once at generation. The carrier
+              confirms pickup/delivery (PIN + photo + GPS) on /handover. */}
+          {booking.paid_at && ['accepted', 'picked_up', 'in_transit'].includes(booking.status) && (
             <div className="bg-accent-light/40 border border-accent-light rounded-2xl p-5">
               <h3 className="font-display font-bold text-lg mb-3">
                 Handoff PINs
               </h3>
               {youAreSender ? (
-                <>
-                  <PinDisplay
-                    label="Pickup PIN — read this to the carrier"
-                    pin={booking.pickup_pin}
-                    used={booking.status !== 'accepted'}
-                  />
-                  <PinDisplay
-                    label="Delivery PIN — give this to your recipient"
-                    pin={booking.delivery_pin}
-                    used={booking.status === 'delivered' || booking.status === 'completed'}
-                  />
-                </>
+                booking.pickup_pin ? (
+                  <p className="text-sm text-ink-soft">
+                    Your PINs were shown once when you generated them. The carrier
+                    needs the <strong>pickup PIN</strong> from you in person, and the{' '}
+                    <strong>delivery PIN</strong> from your recipient.
+                  </p>
+                ) : (
+                  <BookingPins bookingId={booking.id} />
+                )
+              ) : booking.pickup_pin ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-ink-soft">
+                    {booking.status === 'accepted'
+                      ? 'At pickup, ask the sender for their pickup PIN, take a photo of the package, and confirm.'
+                      : 'At delivery, ask the recipient for the delivery PIN, take a photo, and confirm.'}
+                  </p>
+                  <Link
+                    href={`/bookings/${booking.id}/handover`}
+                    className="block w-full bg-ink text-white text-center rounded-full px-5 py-3 font-medium hover:bg-accent transition"
+                  >
+                    {booking.status === 'accepted' ? 'Confirm pickup →' : 'Confirm delivery →'}
+                  </Link>
+                </div>
               ) : (
-                <>
-                  {booking.status === 'accepted' && (
-                    <PinVerify bookingId={booking.id} kind="pickup" />
-                  )}
-                  {['picked_up', 'in_transit'].includes(booking.status) && (
-                    <PinVerify bookingId={booking.id} kind="delivery" />
-                  )}
-                </>
+                <p className="text-sm text-ink-soft">
+                  Waiting for the sender to generate handover PINs.
+                </p>
               )}
             </div>
           )}
 
-          {/* PHOTOS SECOND (after PIN verified) */}
-          {youAreCarrier && booking.status !== 'completed' && booking.status !== 'cancelled' && (
-            <>
-              {booking.status === 'picked_up' && (
-                <PhotoUpload bookingId={booking.id} kind="pickup" existingUrl={pickupUrl} />
-              )}
-              {booking.status === 'delivered' && (
-                <PhotoUpload bookingId={booking.id} kind="delivery" existingUrl={deliveryUrl} />
-              )}
-            </>
-          )}
-          {/* Photos visible read-only to the sender */}
-          {youAreSender && (pickupUrl || deliveryUrl) && (
+          {/* Handover photos, read-only for both parties */}
+          {(pickupUrl || deliveryUrl) && (
             <div className="grid grid-cols-2 gap-3">
               {pickupUrl && <PhotoCard label="Pickup" url={pickupUrl} />}
               {deliveryUrl && <PhotoCard label="Delivery" url={deliveryUrl} />}
@@ -257,9 +264,15 @@ export default async function BookingDetailPage({
             <ReviewForm bookingId={booking.id} subjectName={otherName} />
           )}
 
-          {/* DISPUTE (while active and not already disputed/completed) */}
-          {!['completed', 'cancelled', 'disputed'].includes(booking.status) && (
-            <DisputeForm bookingId={booking.id} />
+          {/* DISPUTE — sender only, before funds are released (RPC enforces).
+              Freezes the payout and flags the booking for admin review. */}
+          {youAreSender &&
+            booking.status === 'delivered' &&
+            !booking.funds_released_at && <DisputeButton bookingId={booking.id} />}
+          {booking.status === 'disputed' && (
+            <p className="text-sm text-amber-800 bg-amber-50 border border-amber-300 rounded-2xl px-5 py-3">
+              Dispute open — the payout is frozen while we review.
+            </p>
           )}
         </div>
 
@@ -284,29 +297,6 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
         {label}
       </span>
       <span className="text-sm font-medium text-right">{children}</span>
-    </div>
-  );
-}
-
-function PinDisplay({
-  label,
-  pin,
-  used,
-}: {
-  label: string;
-  pin: string | null;
-  used: boolean;
-}) {
-  return (
-    <div className="mb-3 last:mb-0">
-      <div className="text-xs text-ink-muted mb-1">{label}</div>
-      <div
-        className={`font-mono text-3xl tracking-[0.5em] ${
-          used ? 'text-ink-muted line-through' : 'text-accent'
-        }`}
-      >
-        {pin ?? '——'}
-      </div>
     </div>
   );
 }

@@ -1,5 +1,8 @@
 'use client';
 
+// ⚠️ DEPRECATED (v2) — DO NOT USE. standalone photo upload; photos are now captured inside the /handover flow.
+// No longer imported anywhere. Kept for reference only.
+
 import { useState, useRef } from 'react';
 import { uploadPackagePhoto } from '@/lib/actions/upload-package-photo';
 

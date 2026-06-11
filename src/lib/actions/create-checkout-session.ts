@@ -1,7 +1,8 @@
-// Server Action — the sender pays for an accepted booking via Stripe
-// Checkout (test mode). On success, the user is redirected back to the
-// booking page and the webhook (api/stripe/webhook) records the
-// payment_intent_id against the booking.
+// ⚠️ DEPRECATED (v2) — DO NOT USE. This Stripe Checkout flow creates its
+// own PaymentIntent that the v3 webhook can't link to a booking, so
+// paid_at never gets set. The live payment path is
+// src/components/PaymentForm.tsx + /api/payments/create-intent.
+// Kept only for reference; no longer imported anywhere.
 //
 // TEST CARD: 4242 4242 4242 4242 · any future date · any 3-digit CVC.
 

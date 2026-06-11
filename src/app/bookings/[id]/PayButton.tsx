@@ -1,5 +1,12 @@
 'use client';
 
+// ⚠️ DEPRECATED (v2) — DO NOT USE. This was the old Stripe Checkout flow.
+// It creates a PaymentIntent the webhook can't match to a booking, so
+// paid_at never gets set ("ORPHAN PAYMENT" in the logs). The live payment
+// path is src/components/PaymentForm.tsx + /api/payments/create-intent.
+// The "Test" mock button below also corrupts bookings by writing fake
+// payment IDs. Kept only for reference; no longer imported anywhere.
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';

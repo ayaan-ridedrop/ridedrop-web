@@ -1,5 +1,8 @@
 'use client';
 
+// ⚠️ DEPRECATED (v2) — DO NOT USE. plaintext-PIN verify UI; replaced by the /handover page (hashed PINs + photo + GPS).
+// No longer imported anywhere. Kept for reference only.
+
 import { useState } from 'react';
 import { verifyPin } from '@/lib/actions/verify-pin';
 import { LoadingSpinner } from './LoadingSpinner';

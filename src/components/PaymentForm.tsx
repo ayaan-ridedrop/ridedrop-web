@@ -5,7 +5,7 @@
 //   <PaymentForm bookingId={booking.id} amountPence={booking.agreed_price_pence} />
 // Requires: npm i @stripe/stripe-js @stripe/react-stripe-js
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import {
   Elements,
@@ -26,8 +26,14 @@ export default function PaymentForm({
 }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // React StrictMode (dev) runs effects twice — without this guard the
+  // endpoint gets called twice and creates two PaymentIntents, and the
+  // user can end up paying one the booking doesn't reference.
+  const requested = useRef(false);
 
   useEffect(() => {
+    if (requested.current) return;
+    requested.current = true;
     (async () => {
       try {
         const res = await fetch('/api/payments/create-intent', {

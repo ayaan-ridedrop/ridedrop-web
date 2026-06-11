@@ -1,4 +1,9 @@
 /**
+ * ⚠️ DEPRECATED (v2) — DO NOT RUN. Reads the `transactions` ledger table,
+ * which the v3 payments migration removed, and imports a helper that no
+ * longer exists. Excluded from tsconfig. Rewrite against `bookings` when
+ * reconciliation is needed.
+ *
  * Stripe reconciliation script
  * Run daily: compares RideDrop ledger against Stripe API
  * Flags any discrepancies for manual review

@@ -2,7 +2,7 @@
 // Pure business logic for money + state. No Supabase, no Stripe —
 // fully unit-testable. Stripe plugs into this later without changes.
 
-import type { TransactionStatus } from '@/types/payments';
+import type { TransactionStatus } from '@/lib/types/payments';
 
 /** Platform commission: 20%. Change here, nowhere else. */
 export const PLATFORM_FEE_PERCENT = 20;

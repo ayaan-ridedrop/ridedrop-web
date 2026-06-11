@@ -115,7 +115,7 @@ npm install
 3. Install the Stripe CLI (`brew install stripe/stripe-cli/stripe`),
    then in a separate terminal run:
    ```bash
-   stripe listen --forward-to localhost:3000/api/stripe/webhook
+   stripe listen --forward-to localhost:3000/api/webhooks/stripe
    ```
    Copy the printed `whsec_...` into `STRIPE_WEBHOOK_SECRET`.
 
@@ -220,7 +220,7 @@ ridedrop-web/
 │   │   ├── logout/route.ts       POST /logout
 │   │   └── api/
 │   │       ├── waitlist/         landing-page waitlist endpoint
-│   │       └── stripe/webhook/   Stripe webhook receiver (stub)
+│   │       └── webhooks/stripe/  Stripe webhook receiver (v3, live)
 │   ├── components/
 │   │   ├── AppShell.tsx          shared nav for logged-in pages
 │   │   └── WaitlistForm.tsx

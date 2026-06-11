@@ -1,5 +1,8 @@
 'use server';
 
+// ⚠️ DEPRECATED (v2) — DO NOT USE. inserts a non-existent description column and is blocked by RLS; replaced by the raise_dispute RPC.
+// No longer imported anywhere. Kept for reference only.
+
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';

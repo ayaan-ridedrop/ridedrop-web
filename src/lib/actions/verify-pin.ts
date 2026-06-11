@@ -1,3 +1,5 @@
+// ⚠️ DEPRECATED (v2) — DO NOT USE. compares plaintext PINs a carrier can read via the API; replaced by confirm_pickup/confirm_delivery RPCs.
+// No longer imported anywhere. Kept for reference only.
 // Server Action — carrier verifies the pickup or delivery PIN that the
 // sender / recipient just read out to them. Confirms consent of handoff.
 
@@ -33,7 +35,7 @@ export async function verifyPin(formData: FormData) {
 
   const { data: booking } = await supabase
     .from('bookings')
-    .select('id, status, carrier_id, pickup_pin, delivery_pin, stripe_payment_intent_id')
+    .select('id, status, carrier_id, pickup_pin, delivery_pin, paid_at')
     .eq('id', parsed.data.bookingId)
     .maybeSingle();
 
@@ -45,8 +47,10 @@ export async function verifyPin(formData: FormData) {
     return { error: 'Only the delivery carrier can verify PINs.' };
   }
 
-  // Pickup PIN requires payment to be made first
-  if (parsed.data.kind === 'pickup' && !booking.stripe_payment_intent_id) {
+  // Pickup PIN requires payment to be made first. paid_at is set by the
+  // Stripe webhook and is the only trustworthy "paid" signal —
+  // stripe_payment_intent_id exists as soon as the payment form opens.
+  if (parsed.data.kind === 'pickup' && !booking.paid_at) {
     return {
       error: 'Payment hasn\'t been made yet.',
       hint: 'Ask the sender to complete payment before pickup. You\'ll see a "Pay now" button in the booking.',

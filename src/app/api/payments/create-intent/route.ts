@@ -49,9 +49,14 @@ export async function POST(req: NextRequest) {
 
   // reuse an existing unpaid intent (sender refreshed / retried)
   if (b.stripe_payment_intent_id) {
-    const pi = await stripe.paymentIntents.retrieve(b.stripe_payment_intent_id);
-    if (pi.status !== 'succeeded' && pi.status !== 'canceled') {
-      return NextResponse.json({ clientSecret: pi.client_secret });
+    try {
+      const pi = await stripe.paymentIntents.retrieve(b.stripe_payment_intent_id);
+      if (pi.status !== 'succeeded' && pi.status !== 'canceled') {
+        return NextResponse.json({ clientSecret: pi.client_secret });
+      }
+    } catch {
+      // stored id isn't a real PaymentIntent (e.g. old mock/test data) —
+      // ignore it and create a fresh intent below
     }
   }
 

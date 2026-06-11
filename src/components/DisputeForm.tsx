@@ -1,5 +1,8 @@
 'use client';
 
+// ⚠️ DEPRECATED (v2) — DO NOT USE. writes a non-existent column and is blocked by RLS; replaced by DisputeButton (raise_dispute RPC).
+// No longer imported anywhere. Kept for reference only.
+
 import { useState } from 'react';
 import { raiseDispute } from '@/lib/actions/raise-dispute';
 import { LoadingSpinner } from './LoadingSpinner';

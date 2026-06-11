@@ -32,11 +32,17 @@ export async function resolveDispute(formData: FormData): Promise<void> {
   // Service-role to cross RLS on the booking.
   const admin = createServiceClient();
 
+  // disputes.status only allows 'open' | 'released' | 'refunded' (DB check
+  // constraint) and the column is resolution_note (singular).
+  // pay_carrier → 'released'; refund_sender / split → 'refunded' (split
+  // detail goes in the note; partial refunds are manual in Stripe for now).
+  const disputeStatus =
+    parsed.data.resolution === 'pay_carrier' ? 'released' : 'refunded';
   const { error: dErr } = await (admin
     .from('disputes') as any)
     .update({
-      status: 'resolved',
-      resolution_notes:
+      status: disputeStatus,
+      resolution_note:
         `Resolution: ${parsed.data.resolution}` +
         (parsed.data.notes ? `\n${parsed.data.notes}` : ''),
       resolved_at: new Date().toISOString(),
@@ -44,19 +50,15 @@ export async function resolveDispute(formData: FormData): Promise<void> {
     .eq('id', parsed.data.disputeId);
   if (dErr) throw new Error(dErr.message);
 
-  // For pay_carrier: complete the booking (carrier stats bump via trigger).
-  // For refund_sender: cancel the booking.
-  // For split: cancel the booking and rely on manual Stripe refund.
+  // pay_carrier → booking completed; the payout function moves the money
+  // (do NOT set funds_released_at here — see confirm-delivery.ts).
+  // refund_sender / split → booking cancelled; refund manually in Stripe.
   const newStatus =
     parsed.data.resolution === 'pay_carrier' ? 'completed' : 'cancelled';
   const { error: bErr } = await (admin
     .from('bookings') as any)
     .update({
       status: newStatus,
-      funds_released_at:
-        parsed.data.resolution === 'pay_carrier'
-          ? new Date().toISOString()
-          : null,
     })
     .eq('id', parsed.data.bookingId);
   if (bErr) throw new Error(bErr.message);

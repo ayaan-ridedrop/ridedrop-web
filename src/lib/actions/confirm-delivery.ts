@@ -32,11 +32,14 @@ export async function confirmDelivery(formData: FormData) {
     return { error: `Cannot confirm while booking is ${booking.status}` };
   }
 
+  // NOTE: this does NOT set funds_released_at. Only the payout (release)
+  // function may set that, at the moment money actually moves via Stripe.
+  // Marking it here would make the payout function skip this booking and
+  // the carrier would never be paid.
   const { error } = await supabase
     .from('bookings')
     .update({
       status: 'completed',
-      funds_released_at: new Date().toISOString(),
     })
     .eq('id', booking.id);
 

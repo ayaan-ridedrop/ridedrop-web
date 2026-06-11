@@ -72,7 +72,7 @@ export default function NewJourneyForm() {
     const arrival_at = `${departureDate}T${selectedArrival}:00`;
 
     const capacity = Number(fd.get('capacity') ?? 1);
-    const { data: insertedJourney, error: insertErr } = await supabase.from('journeys').insert({
+    const payload = {
       carrier_id: user.id,
       from_station: fromStn,
       to_station: toStn,
@@ -85,8 +85,10 @@ export default function NewJourneyForm() {
       minimum_price_pence: Math.round(Number(fd.get('min_price') ?? 0) * 100),
       max_weight_kg: Number(fd.get('max_weight_kg') ?? 5),
       food_ok: fd.get('food_ok') === 'on',
-      status: 'ticket_pending', // awaiting admin verification
-    }).select().single();
+      status: 'ticket_pending',
+    };
+    console.log('[new journey] payload:', payload);
+    const { data: insertedJourney, error: insertErr } = await supabase.from('journeys').insert(payload).select().single();
 
     // TODO: Store ticket photo in Supabase Storage and link to journey
     // Ticket is validated on form submission but storage is not yet implemented

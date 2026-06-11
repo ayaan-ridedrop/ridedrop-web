@@ -1,3 +1,5 @@
+// ⚠️ DEPRECATED (v2) — DO NOT USE. photo-driven state changes; photos are now part of confirm_pickup/confirm_delivery RPCs.
+// No longer imported anywhere. Kept for reference only.
 // Server Action — receive a pickup or delivery photo for a booking.
 // Photos go to the 'package-photos' bucket at: <booking_id>/<kind>.<ext>
 // GPS coords are captured client-side (browser geolocation) at the moment

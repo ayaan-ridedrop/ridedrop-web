@@ -41,17 +41,41 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'payment_intent.succeeded': {
         const pi = event.data.object as Stripe.PaymentIntent;
-        const { data: b } = await db
+        let { data: b } = await db
           .from('bookings')
           .select('id, paid_at')
           .eq('stripe_payment_intent_id', pi.id)
           .maybeSingle();
 
+        // Safety net: every PI we create carries booking_id in metadata.
+        // If the stored id doesn't match (e.g. a duplicate create-intent
+        // call overwrote it before this payment landed), recover the
+        // booking from metadata and re-point it at the PI that was
+        // actually paid.
+        if (!b && pi.metadata?.booking_id) {
+          const { data: byMeta } = await db
+            .from('bookings')
+            .select('id, paid_at')
+            .eq('id', pi.metadata.booking_id)
+            .maybeSingle();
+          if (byMeta && !byMeta.paid_at) {
+            await db
+              .from('bookings')
+              .update({
+                stripe_payment_intent_id: pi.id,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', byMeta.id)
+              .is('paid_at', null);
+          }
+          b = byMeta;
+        }
+
         if (!b) {
           console.error(`ORPHAN PAYMENT: PI ${pi.id} succeeded with no booking`);
           break;
         }
-        if (b.paid_at) break; // already recorded
+        if (b.paid_at) break; // already recorded (e.g. double payment — refund manually in Stripe)
 
         await db
           .from('bookings')
