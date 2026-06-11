@@ -4,7 +4,7 @@
 // balance until 24h after confirmed delivery.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe, supabaseAdmin } from '@/lib/stripe-server';
+import { getStripeServer, supabaseAdmin } from '@/lib/stripe-server';
 import { getServerUser } from '@/lib/supabase-server';
 import { splitAmount } from '@/lib/payments';
 
@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'booking_id required' }, { status: 400 });
 
   const db = supabaseAdmin();
+  const stripe = getStripeServer();
 
   const { data: b, error: bErr } = await db
     .from('bookings')

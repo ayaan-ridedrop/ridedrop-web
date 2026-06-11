@@ -2,13 +2,14 @@
 // POST: carrier starts/resumes Stripe Express onboarding.
 
 import { NextResponse } from 'next/server';
-import { stripe, supabaseAdmin } from '@/lib/stripe-server';
+import { getStripeServer, supabaseAdmin } from '@/lib/stripe-server';
 import { getServerUser } from '@/lib/supabase-server';
 
 export async function POST() {
   const user = await getServerUser();
   if (!user) return NextResponse.json({ error: 'Not signed in' }, { status: 401 });
 
+  const stripe = getStripeServer();
   const db = supabaseAdmin();
   const { data: cp } = await db
     .from('carrier_profiles')
