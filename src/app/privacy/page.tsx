@@ -32,10 +32,11 @@ export default function PrivacyPage() {
       <div className="space-y-8 text-ink-soft font-light leading-relaxed">
         <Section title="1. Who we are">
           <p>
-            RideDrop is operated by [Company Name to be inserted once Ltd is
-            registered], a private limited company in the UK. We are the
+            RideDrop is operated by RideDrop Ltd, a private limited company
+            registered in England and Wales (company number 17274629). We are
+            the
             <em> data controller</em> for the personal data we collect through
-            ridedrop.co.uk and our mobile app. Contact us at{' '}
+            ridedrop.co.uk. Contact us at{' '}
             <a className="underline" href="mailto:privacy@ridedrop.co.uk">
               privacy@ridedrop.co.uk
             </a>.

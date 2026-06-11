@@ -234,7 +234,10 @@ export default function LandingPage() {
         <div className="font-display font-extrabold text-lg text-white">
           RideDrop<span className="text-accent-mid">.</span>
         </div>
-        <p className="text-xs">© 2026 RideDrop. All rights reserved.</p>
+        <p className="text-xs">
+          © 2026 RideDrop Ltd · Registered in England &amp; Wales, company no.
+          17274629 · All rights reserved.
+        </p>
         <div className="flex gap-6 text-xs">
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
