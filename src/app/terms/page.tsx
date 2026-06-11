@@ -24,11 +24,8 @@ export default function TermsPage() {
       <h1 className="text-4xl mb-2">Terms of Service</h1>
       <p className="text-sm text-ink-muted mb-8">Last updated: {UPDATED}</p>
 
-      <p className="text-amber-700 bg-amber-50 border border-amber-300 rounded-xl p-4 mb-10 text-sm font-light">
-        <strong className="font-medium">Pre-launch draft.</strong> RideDrop T&Cs
-        must be reviewed by a UK lawyer before launch — particularly around
-        platform vs. courier liability framing. Treat this as a starting
-        point.
+      <p className="text-ink-muted text-sm font-light mb-10">
+        These terms will be finalised with legal counsel before public launch.
       </p>
 
       <div className="space-y-8 text-ink-soft font-light leading-relaxed">

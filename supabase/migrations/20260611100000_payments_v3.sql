@@ -111,7 +111,7 @@ create or replace function public.generate_booking_pins(p_booking_id uuid)
 returns json
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_b bookings%rowtype;
@@ -144,7 +144,7 @@ create or replace function public.confirm_pickup(
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_b bookings%rowtype;
@@ -184,7 +184,7 @@ create or replace function public.confirm_delivery(
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_b bookings%rowtype;
@@ -221,7 +221,7 @@ create or replace function public.raise_dispute(p_booking_id uuid, p_reason text
 returns uuid
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_b bookings%rowtype;

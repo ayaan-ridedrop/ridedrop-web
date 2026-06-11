@@ -24,7 +24,11 @@ export default function BookingPins({ bookingId }: { bookingId: string }) {
       if (rpcErr) throw rpcErr;
       setPins(data as { pickup_pin: string; delivery_pin: string });
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Could not generate PINs.');
+      const msg =
+        e && typeof e === 'object' && 'message' in e
+          ? String((e as { message: unknown }).message)
+          : 'Could not generate PINs.';
+      setError(msg);
     } finally {
       setBusy(false);
     }

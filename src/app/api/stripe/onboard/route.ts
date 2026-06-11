@@ -33,6 +33,14 @@ export async function POST() {
       email: user.email ?? undefined,
       capabilities: { transfers: { requested: true } },
       business_type: 'individual',
+      // Pre-fill so Stripe doesn't hold payouts waiting for a "business
+      // website" — carriers are individuals working via the platform.
+      business_profile: {
+        url: process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https')
+          ? process.env.NEXT_PUBLIC_SITE_URL
+          : 'https://ridedrop.co.uk',
+        product_description: 'Peer-to-peer parcel delivery as a RideDrop carrier',
+      },
       metadata: { profile_id: user.id },
     });
     accountId = account.id;

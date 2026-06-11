@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
+import OnboardPayoutsButton from '@/components/OnboardPayoutsButton';
 
 export default async function EarningsPage() {
   const supabase  = createClient() as any;
@@ -111,10 +112,13 @@ export default async function EarningsPage() {
           </div>
 
           {!cp?.payout_enabled && (
-            <div className="bg-amber-50 border border-amber-300 rounded-2xl p-5 mb-10 text-sm text-amber-900">
-              You haven't connected a payout method yet. Once Stripe Connect
-              is approved, you'll be able to link a bank account from your
-              profile to receive payouts.
+            <div className="bg-amber-50 border border-amber-300 rounded-2xl p-5 mb-10 text-sm text-amber-900 space-y-3">
+              <p>
+                You haven't connected a payout method yet. Set one up with
+                Stripe to receive your earnings — it takes a couple of
+                minutes and you'll need your bank details.
+              </p>
+              <OnboardPayoutsButton />
             </div>
           )}
 

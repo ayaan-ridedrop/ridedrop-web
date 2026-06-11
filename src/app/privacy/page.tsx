@@ -24,11 +24,9 @@ export default function PrivacyPage() {
       <h1 className="text-4xl mb-2">Privacy Policy</h1>
       <p className="text-sm text-ink-muted mb-8">Last updated: {UPDATED}</p>
 
-      <p className="text-amber-700 bg-amber-50 border border-amber-300 rounded-xl p-4 mb-10 text-sm font-light">
-        <strong className="font-medium">Pre-launch draft.</strong> This policy
-        reflects the data RideDrop processes today. The final, lawyer-reviewed
-        version may differ — particularly around dispute records and ID
-        verification retention.
+      <p className="text-ink-muted text-sm font-light mb-10">
+        This policy will be finalised with legal counsel before public launch.
+        It reflects the data RideDrop processes today.
       </p>
 
       <div className="space-y-8 text-ink-soft font-light leading-relaxed">
@@ -104,7 +102,7 @@ export default function PrivacyPage() {
               <strong>Resend</strong> (transactional emails).
             </li>
             <li>
-              <strong>Vercel</strong> (web hosting).
+              <strong>Netlify</strong> (web hosting).
             </li>
           </ul>
           <p className="mt-3">
