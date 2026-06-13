@@ -1,11 +1,11 @@
 'use client';
 
-// src/components/DisputeButton.tsx  (v3 — bookings, via raise_dispute RPC)
+// src/components/DisputeButton.tsx  (v3 — bookings, via raise_dispute RPC + email)
 // Sender-side, on the booking page when status === 'delivered':
 //   <DisputeButton bookingId={booking.id} />
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { raiseDisputeWithEmail } from '@/lib/actions/raise-dispute-with-email';
 
 export default function DisputeButton({ bookingId }: { bookingId: string }) {
   const [open, setOpen] = useState(false);
@@ -18,12 +18,14 @@ export default function DisputeButton({ bookingId }: { bookingId: string }) {
     setBusy(true);
     setError(null);
     try {
-      const { error: rpcErr } = await supabase.rpc('raise_dispute', {
-        p_booking_id: bookingId,
-        p_reason: reason.trim(),
-      });
-      if (rpcErr) throw rpcErr;
-      setDone(true);
+      const result = await raiseDisputeWithEmail(bookingId, reason);
+      if (result.error) {
+        setError(result.error);
+      } else if (result.ok) {
+        setDone(true);
+      } else {
+        setError('Could not raise dispute.');
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Could not raise dispute.');
     } finally {

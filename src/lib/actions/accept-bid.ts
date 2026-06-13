@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { getFriendlyErrorMessage } from '@/lib/error-messages';
+import { emails } from '@/lib/email';
+import { getUserEmail } from '@/lib/user-email';
 
 const schema = z.object({
   bidId: z.string().uuid(),
@@ -86,6 +88,32 @@ export async function acceptBid(formData: FormData) {
     .update({ status: 'rejected' })
     .eq('job_id', bid.job_id)
     .neq('id', parsed.data.bidId);
+
+  // Send booking acceptance email to the carrier (fire-and-forget)
+  try {
+    const bookingId = booking?.[0]?.id;
+    const [{ data: jobData }, { data: carrier }, carrierEmail] = await Promise.all([
+      supabase.from('jobs').select('from_station, to_station').eq('id', bid.job_id).single(),
+      supabase.from('profiles').select('first_name').eq('id', bid.carrier_id).single(),
+      getUserEmail(bid.carrier_id),
+    ]);
+
+    if (jobData && carrierEmail) {
+      const priceGbp = bid.amount_pence / 100;
+      const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://ridedrop.co.uk';
+      await emails.bookingAccepted({
+        to: carrierEmail,
+        senderName: 'there', // We don't fetch sender name here, not critical
+        carrierName: carrier?.first_name ?? 'there',
+        route: `${jobData.from_station} → ${jobData.to_station}`,
+        priceGbp,
+        bookingUrl: `${SITE}/bookings/${bookingId}`,
+      });
+    }
+  } catch (err) {
+    // Log but don't block the response — email is best-effort
+    console.error('[accept-bid] booking accepted email failed:', err);
+  }
 
   revalidatePath(`/jobs/${bid.job_id}`);
   revalidatePath('/bookings');
