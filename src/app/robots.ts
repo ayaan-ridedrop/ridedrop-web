@@ -1,8 +1,9 @@
 // Tells search engines what to crawl. Auth and app routes are excluded.
 
 import type { MetadataRoute } from 'next';
+import { BASE_URL } from '@/lib/base-url';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://ridedrop.co.uk';
+const APP_URL = BASE_URL;
 
 export default function robots(): MetadataRoute.Robots {
   return {

@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import CookieBanner from '@/components/CookieBanner';
+import { BASE_URL } from '@/lib/base-url';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+const APP_URL = BASE_URL;
 const TITLE = 'RideDrop — Train-powered delivery across the UK';
 const DESCRIPTION =
   "RideDrop connects people who need to send packages between UK cities with travellers already making that train journey. Faster than Royal Mail. Cheaper than couriers.";
@@ -46,6 +47,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+          rel="stylesheet"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

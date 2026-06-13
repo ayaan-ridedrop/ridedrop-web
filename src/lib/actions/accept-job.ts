@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { RIDEDROP_COMMISSION, type Profile } from '@/lib/types';
 import { emails } from '@/lib/email';
+import { BASE_URL } from '@/lib/base-url';
 
 const schema = z.object({
   jobId: z.string().uuid(),
@@ -93,7 +94,7 @@ export async function acceptJob(formData: FormData) {
   // Email the sender that someone just accepted their job.
   // auth.admin requires service-role; fire-and-forget so a missing
   // Resend key never blocks the booking.
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  const baseUrl = BASE_URL;
   try {
     const admin = createServiceClient();
     const [{ data: senderAuth }, { data: senderProfile }, { data: carrierProfile }] =

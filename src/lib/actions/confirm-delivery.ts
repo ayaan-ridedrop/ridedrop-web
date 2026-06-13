@@ -6,7 +6,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 
 const schema = z.object({
   bookingId: z.string().uuid(),
@@ -36,12 +36,21 @@ export async function confirmDelivery(formData: FormData) {
   // function may set that, at the moment money actually moves via Stripe.
   // Marking it here would make the payout function skip this booking and
   // the carrier would never be paid.
-  const { error } = await supabase
+  //
+  // SECURITY: written via the service-role client. Clients no longer have
+  // UPDATE on bookings (see migration 20260613000000_security_phase1.sql),
+  // so this trusted write must bypass the anon role. The auth checks above
+  // (sender owns booking, status === 'delivered') are what authorise it.
+  const admin = createServiceClient() as any;
+  const { error } = await admin
     .from('bookings')
     .update({
       status: 'completed',
+      updated_at: new Date().toISOString(),
     })
-    .eq('id', booking.id);
+    .eq('id', booking.id)
+    .eq('sender_id', user.id)        // belt-and-braces: re-assert ownership
+    .eq('status', 'delivered');      // and the required precondition
 
   if (error) return { error: error.message };
 

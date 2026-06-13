@@ -1,0 +1,81 @@
+# Scheduled jobs for RideDrop.
+#
+# WHY THIS EXISTS
+# ---------------
+# The app has two cron endpoints that must be called on a schedule:
+#   * /api/cron/release-payouts     — releases carrier earnings from escrow
+#                                     once the 24h dispute window has passed.
+#                                     WITHOUT this running, carriers never get
+#                                     paid. This is the important one.
+#   * /api/cron/cancel-expired-jobs — tidies up jobs/journeys past their
+#                                     deadline so the marketplace stays clean.
+#
+# Both endpoints are protected by a shared secret. This workflow calls them
+# on a schedule using GitHub's free scheduled Actions, so we don't depend on
+# any third-party cron service.
+#
+# ONE-TIME SETUP (Ayaan does this once, in GitHub):
+#   Repo → Settings → Secrets and variables → Actions → New repository secret
+#   Name:  CRON_SECRET
+#   Value: the exact same CRON_SECRET value that's in Netlify's env vars
+#          (currently: 0e11c448ea67f9bfe6553044686c5d705fcd4a606f52e43f)
+#
+# After that, this runs automatically every hour. You can also trigger it by
+# hand from the repo's "Actions" tab → "Scheduled jobs" → "Run workflow".
+
+name: Scheduled jobs
+
+on:
+  schedule:
+    # Every hour, on the hour (UTC). GitHub may delay this by a few minutes
+    # under load — that's fine, payouts are not time-critical to the minute.
+    - cron: "0 * * * *"
+  workflow_dispatch: {} # lets you run it manually from the Actions tab
+
+# Don't let two scheduled runs overlap.
+concurrency:
+  group: ridedrop-cron
+  cancel-in-progress: false
+
+jobs:
+  cron:
+    name: Run scheduled endpoints
+    runs-on: ubuntu-latest
+    env:
+      SITE_URL: https://ridedrop.co.uk
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+    steps:
+      - name: Guard — CRON_SECRET must be set
+        run: |
+          if [ -z "${CRON_SECRET}" ]; then
+            echo "::error::CRON_SECRET repository secret is not set. Add it under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+      - name: Release carrier payouts
+        run: |
+          echo "POST ${SITE_URL}/api/cron/release-payouts"
+          code=$(curl -sS -o /tmp/payouts.txt -w "%{http_code}" \
+            -X POST "${SITE_URL}/api/cron/release-payouts" \
+            -H "Authorization: Bearer ${CRON_SECRET}")
+          echo "HTTP ${code}"
+          cat /tmp/payouts.txt || true
+          echo ""
+          if [ "${code}" -ge 400 ]; then
+            echo "::error::release-payouts returned HTTP ${code}"
+            exit 1
+          fi
+
+      - name: Cancel expired jobs and journeys
+        run: |
+          echo "POST ${SITE_URL}/api/cron/cancel-expired-jobs"
+          code=$(curl -sS -o /tmp/expire.txt -w "%{http_code}" \
+            -X POST "${SITE_URL}/api/cron/cancel-expired-jobs" \
+            -H "Authorization: Bearer ${CRON_SECRET}")
+          echo "HTTP ${code}"
+          cat /tmp/expire.txt || true
+          echo ""
+          if [ "${code}" -ge 400 ]; then
+            echo "::error::cancel-expired-jobs returned HTTP ${code}"
+            exit 1
+          fi

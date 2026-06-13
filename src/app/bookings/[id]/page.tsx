@@ -8,6 +8,7 @@ import ReviewForm from '@/components/ReviewForm';
 import DisputeButton from '@/components/DisputeButton';
 import ConfirmDeliveryButton from './ConfirmDeliveryButton';
 import PaymentForm from '@/components/PaymentForm';
+import LiveTrainTracking from '@/components/LiveTrainTracking';
 
 export default async function BookingDetailPage({
   params,
@@ -120,6 +121,21 @@ export default async function BookingDetailPage({
           </p>
         )}
       </div>
+
+      {/* LIVE TRAIN TRACKING — parcel is paid for and on the move */}
+      {booking.paid_at &&
+        ['picked_up', 'in_transit'].includes(booking.status) &&
+        journey?.from_station &&
+        journey?.departure_at && (
+          <LiveTrainTracking
+            from={journey.from_station}
+            to={journey.to_station}
+            departureAt={journey.departure_at}
+            arrivalAt={journey.arrival_at}
+            operator={journey.train_operator}
+            carrierName={youAreCarrier ? undefined : otherName}
+          />
+        )}
 
       {/* VERIFY IDENTITY (safety check) */}
       {['accepted', 'picked_up', 'in_transit', 'delivered'].includes(booking.status) && (

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { captureException } from '@/lib/logger';
 
 export async function POST(req: Request) {
   // Verify it's from Netlify Cron or internal call
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
 
     return Response.json({ success: true, message: 'Expired jobs cancelled, matched jobs completed, orphaned jobs cleaned, old incomplete jobs deleted' });
   } catch (err: any) {
-    console.error('[cron] error:', err);
+    captureException(err, { scope: 'cancel-expired-jobs' });
     return Response.json({ error: err.message }, { status: 500 });
   }
 }

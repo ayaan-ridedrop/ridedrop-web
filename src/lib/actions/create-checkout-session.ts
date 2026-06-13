@@ -10,6 +10,7 @@
 
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
+import { BASE_URL } from '@/lib/base-url';
 import { createClient } from '@/lib/supabase/server';
 import { getStripe } from '@/lib/stripe';
 
@@ -39,7 +40,7 @@ export async function createCheckoutSession(formData: FormData) {
   if (b.status !== 'accepted') return { error: `Cannot pay while booking is ${b.status}` };
   if (b.stripe_payment_intent_id) return { error: 'Already paid' };
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  const baseUrl = BASE_URL;
 
   let stripe;
   try {

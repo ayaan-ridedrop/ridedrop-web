@@ -4,6 +4,7 @@
 import { NextResponse } from 'next/server';
 import { getStripeServer, supabaseAdmin } from '@/lib/stripe-server';
 import { getServerUser } from '@/lib/supabase-server';
+import { BASE_URL } from '@/lib/base-url';
 
 export async function POST() {
   const user = await getServerUser();
@@ -50,7 +51,7 @@ export async function POST() {
       .eq('id', user.id);
   }
 
-  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+  const origin = BASE_URL;
   const link = await stripe.accountLinks.create({
     account: accountId,
     type: 'account_onboarding',

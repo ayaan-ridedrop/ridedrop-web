@@ -17,6 +17,7 @@
 import { NextResponse } from 'next/server';
 import { getStripeServer, supabaseAdmin } from '@/lib/stripe-server';
 import { emails } from '@/lib/email';
+import { logger, captureException } from '@/lib/logger';
 
 export async function POST(req: Request) {
   const auth = req.headers.get('authorization');
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
     .limit(25); // batch; the next run picks up the rest
 
   if (qErr) {
-    console.error('[release-payouts] query failed:', qErr.message);
+    captureException(qErr, { scope: 'release-payouts', stage: 'query due bookings' });
     return NextResponse.json({ error: 'query failed' }, { status: 500 });
   }
 
@@ -96,11 +97,15 @@ export async function POST(req: Request) {
         .is('funds_released_at', null);
 
       if (upErr) {
-        // money moved but DB write failed — loud log; idempotency key
-        // protects against double-pay on the retry that fixes this.
-        console.error(
-          `[release-payouts] PAID BUT NOT RECORDED: booking ${b.id} transfer ${transfer.id}: ${upErr.message}`,
-        );
+        // money moved but DB write failed — critical; the transfer_group
+        // lookup protects against double-pay on the retry that fixes this.
+        captureException(new Error('PAID BUT NOT RECORDED'), {
+          scope: 'release-payouts',
+          severity: 'critical',
+          booking: b.id,
+          transfer: transfer.id,
+          dbError: upErr.message,
+        });
         results.push({ booking: b.id, ok: false, detail: `transfer ok, db failed: ${upErr.message}` });
         continue;
       }
@@ -127,11 +132,11 @@ export async function POST(req: Request) {
           });
         }
       } catch (err) {
-        console.error(`[release-payouts] payout email failed for ${b.id}:`, err);
+        logger.warn('payout email failed', { scope: 'release-payouts', booking: b.id, error: String(err) });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error(`[release-payouts] booking ${b.id} failed:`, msg);
+      captureException(err, { scope: 'release-payouts', booking: b.id });
       results.push({ booking: b.id, ok: false, detail: msg });
     }
   }

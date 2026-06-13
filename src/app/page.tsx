@@ -14,30 +14,30 @@ export default function LandingPage() {
       {/* NAV */}
       <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 md:px-12 py-5 bg-cream/85 backdrop-blur border-b border-black/5">
         <Link href="/" className="font-display font-extrabold text-xl">
-          RideDrop<span className="text-accent-mid">.</span>
+          <img src="/logo-mark.png" alt="" className="inline-block h-[1.15em] w-[1.15em] rounded-[24%] mr-[0.35em] align-[-0.18em]" />RideDrop<span className="text-accent-mid">.</span>
         </Link>
-        <div className="hidden md:flex items-center gap-8 text-sm text-ink-soft">
+        <div className="hidden lg:flex items-center gap-7 text-sm text-ink-soft whitespace-nowrap">
           <a href="#how">How it works</a>
           <a href="#why">Why RideDrop</a>
           <a href="#carriers">Earn</a>
           <a href="#routes">Routes</a>
           <a href="#faq">FAQ</a>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 whitespace-nowrap">
           <Link href="/login" className="text-sm text-ink-soft hover:text-ink">
             Sign in
           </Link>
           <Link
             href="/signup"
-            className="text-sm text-ink-soft hover:text-ink hidden md:inline"
+            className="text-sm text-ink-soft hover:text-ink hidden lg:inline"
           >
             Sign up
           </Link>
           <Link
-            href="#signup"
+            href="/signup"
             className="bg-ink text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-accent transition"
           >
-            Join early access
+            Get started
           </Link>
         </div>
       </nav>
@@ -50,10 +50,10 @@ export default function LandingPage() {
           <RouteAnimation />
         </div>
 
-        <div className="relative z-10 max-w-2xl">
+        <div className="relative z-10 max-w-2xl rd-fade-up">
           <div className="inline-flex items-center gap-2 bg-accent-light text-accent px-3 py-1 rounded-full text-xs font-medium mb-7">
             <span className="w-1.5 h-1.5 rounded-full bg-accent-mid animate-pulse" />
-            Now accepting early signups
+            Now open across the UK
           </div>
           <h1 className="text-5xl md:text-7xl leading-[1.02] mb-6">
             Someone's already<br />
@@ -213,11 +213,11 @@ export default function LandingPage() {
 
       {/* WAITLIST */}
       <section id="signup" className="px-6 md:px-12 py-20 md:py-28 bg-ink text-white text-center">
-        <Eyebrow accent>Early access</Eyebrow>
-        <h2 className="text-3xl md:text-5xl mb-3 text-white">Be first on RideDrop.</h2>
+        <Eyebrow accent>Get started</Eyebrow>
+        <h2 className="text-3xl md:text-5xl mb-3 text-white">Send your first package.</h2>
         <p className="text-white/55 max-w-md mx-auto mb-12 font-light">
-          We're launching soon. Sign up now and we'll notify you the moment
-          RideDrop goes live in your city.
+          Tell us your route and we'll match you with travellers already making
+          the trip. Sign up to get started.
         </p>
         <WaitlistForm />
       </section>
@@ -231,9 +231,9 @@ export default function LandingPage() {
 
       {/* FOOTER */}
       <footer className="bg-ink text-white/40 px-6 md:px-12 py-10 flex flex-wrap justify-between items-center gap-4 border-t border-white/10">
-        <div className="font-display font-extrabold text-lg text-white">
-          RideDrop<span className="text-accent-mid">.</span>
-        </div>
+        <Link href="/" className="font-display font-extrabold text-lg text-white">
+          <img src="/logo-mark.png" alt="" className="inline-block h-[1.15em] w-[1.15em] rounded-[24%] mr-[0.35em] align-[-0.18em]" />RideDrop<span className="text-accent-mid">.</span>
+        </Link>
         <p className="text-xs">
           © 2026 RideDrop Ltd · Registered in England &amp; Wales, company no.
           17274629 · All rights reserved.
@@ -322,5 +322,5 @@ const FAQ = [
   { q: 'How are carriers verified?', a: 'Every carrier completes government-issued ID verification before they can accept any jobs. They also link a real bank account via Stripe for payouts. Only verified carriers appear in search results.' },
   { q: 'What can I send?', a: 'Anything that fits in a standard bag — documents, gifts, clothing, small electronics, food (if the carrier opts in). Prohibited items include cash, weapons, controlled substances, live animals, and anything banned on public transport.' },
   { q: 'How does payment work?', a: 'Senders pay upfront when they confirm a carrier. The payment is held securely by Stripe until delivery is confirmed. Carriers receive their earnings (minus RideDrop\'s 20% commission) within 24 hours of a completed delivery.' },
-  { q: 'When is the app launching?', a: "We're in development now and targeting a beta launch on key UK routes within the coming months. Sign up above and you'll be among the first to know — and first to get access." },
+  { q: 'Which routes can I use?', a: "We're rolling out across key UK rail routes now, starting with the busiest city pairs and adding more as the carrier network grows. Sign up to see carriers already travelling your route." },
 ];

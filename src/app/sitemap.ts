@@ -2,8 +2,9 @@
 // Console + Bing Webmaster Tools after deploying.
 
 import type { MetadataRoute } from 'next';
+import { BASE_URL } from '@/lib/base-url';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://ridedrop.co.uk';
+const APP_URL = BASE_URL;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

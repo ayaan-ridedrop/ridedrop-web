@@ -16,7 +16,7 @@ export default function VerifyEmailPage({
       <div className="w-full max-w-sm text-center">
         <div className="mb-8">
           <Link href="/" className="font-display font-extrabold text-2xl">
-            RideDrop<span className="text-accent-mid">.</span>
+            <img src="/logo-mark.png" alt="" className="inline-block h-[1.15em] w-[1.15em] rounded-[24%] mr-[0.35em] align-[-0.18em]" />RideDrop<span className="text-accent-mid">.</span>
           </Link>
         </div>
 

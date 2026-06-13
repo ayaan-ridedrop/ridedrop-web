@@ -65,7 +65,7 @@ export default async function OpengraphImage() {
               fontWeight: 500,
             }}
           >
-            Join the waitlist
+            Get started
           </span>
         </div>
       </div>
