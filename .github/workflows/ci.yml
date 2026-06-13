@@ -1,0 +1,31 @@
+# Continuous checks — runs on every push and pull request.
+#
+# WHY: a safety net so a future change can't silently break the build or
+# reintroduce a type error (e.g. an RLS/booking regression) while no one's
+# watching. This runs the TypeScript type-check on GitHub's runners — it does
+# NOT touch your live site, database, or any secrets.
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch: {}
+
+jobs:
+  typecheck:
+    name: Type-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript type-check
+        run: npx tsc --noEmit

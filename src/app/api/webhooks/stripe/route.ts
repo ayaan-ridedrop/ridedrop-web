@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { getStripeServer, supabaseAdmin } from '@/lib/stripe-server';
 import { emails } from '@/lib/email';
+import { getUserEmail } from '@/lib/user-email';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://ridedrop.co.uk';
 
@@ -24,14 +25,15 @@ async function emailCarrierPaymentReceived(db: any, bookingId: string) {
       .eq('id', bookingId)
       .single();
     if (!b) return;
-    const [{ data: job }, { data: carrier }] = await Promise.all([
+    const [{ data: job }, { data: carrier }, carrierEmail] = await Promise.all([
       db.from('jobs').select('from_station, to_station').eq('id', b.job_id).single(),
-      db.from('profiles').select('email, first_name').eq('id', b.carrier_id).single(),
+      db.from('profiles').select('first_name').eq('id', b.carrier_id).single(),
+      getUserEmail(b.carrier_id), // email lives in auth.users, not profiles
     ]);
-    if (!job || !carrier?.email) return;
+    if (!job || !carrierEmail) return;
     await emails.paymentReceived({
-      to: carrier.email,
-      carrierName: carrier.first_name ?? 'there',
+      to: carrierEmail,
+      carrierName: carrier?.first_name ?? 'there',
       route: `${job.from_station} → ${job.to_station}`,
       bookingUrl: `${SITE}/bookings/${b.id}`,
     });

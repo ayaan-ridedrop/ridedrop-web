@@ -7,6 +7,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { emails } from '@/lib/email';
+import { getUserEmail } from '@/lib/user-email';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://ridedrop.co.uk';
 
@@ -24,12 +25,20 @@ async function loadBooking(bookingId: string) {
     .maybeSingle();
   if (!b || (b.sender_id !== user.id && b.carrier_id !== user.id)) return null;
 
-  const [{ data: job }, { data: sender }, { data: carrier }] = await Promise.all([
-    supabase.from('jobs').select('from_station, to_station').eq('id', b.job_id).single(),
-    supabase.from('profiles').select('email, first_name').eq('id', b.sender_id).single(),
-    supabase.from('profiles').select('email, first_name').eq('id', b.carrier_id).single(),
-  ]);
-  if (!job || !sender || !carrier) return null;
+  const [{ data: job }, { data: senderP }, { data: carrierP }, senderEmail, carrierEmail] =
+    await Promise.all([
+      supabase.from('jobs').select('from_station, to_station').eq('id', b.job_id).single(),
+      supabase.from('profiles').select('first_name').eq('id', b.sender_id).single(),
+      supabase.from('profiles').select('first_name').eq('id', b.carrier_id).single(),
+      getUserEmail(b.sender_id), // email lives in auth.users, not profiles
+      getUserEmail(b.carrier_id),
+    ]);
+  if (!job) return null;
+
+  // email is the one thing we actually need to send; names are best-effort.
+  const sender = { email: senderEmail, first_name: senderP?.first_name ?? null };
+  const carrier = { email: carrierEmail, first_name: carrierP?.first_name ?? null };
+  if (!sender.email && !carrier.email) return null;
 
   return {
     booking: b,
@@ -48,6 +57,7 @@ export async function notifyPinsGenerated(bookingId: string) {
   const { booking, user, route, carrier, url } = ctx;
   if (user.id !== booking.sender_id) return; // only the sender triggers this
   if (!booking.pickup_pin) return; // PINs must actually exist
+  if (!carrier.email) return; // can't email without an address
 
   await emails.pinsGenerated({
     to: carrier.email,
@@ -68,19 +78,27 @@ export async function notifyDelivered(bookingId: string) {
 
   const netGbp = (booking.agreed_price_pence - booking.commission_pence) / 100;
 
-  await Promise.all([
-    emails.packageDelivered({
-      to: sender.email,
-      senderName: sender.first_name ?? 'there',
-      route,
-      bookingUrl: url,
-    }),
-    emails.deliveryConfirmed({
-      to: carrier.email,
-      name: carrier.first_name ?? 'there',
-      route,
-      amountGbp: netGbp,
-      bookingUrl: url,
-    }),
-  ]);
+  const tasks: Promise<unknown>[] = [];
+  if (sender.email) {
+    tasks.push(
+      emails.packageDelivered({
+        to: sender.email,
+        senderName: sender.first_name ?? 'there',
+        route,
+        bookingUrl: url,
+      }),
+    );
+  }
+  if (carrier.email) {
+    tasks.push(
+      emails.deliveryConfirmed({
+        to: carrier.email,
+        name: carrier.first_name ?? 'there',
+        route,
+        amountGbp: netGbp,
+        bookingUrl: url,
+      }),
+    );
+  }
+  await Promise.all(tasks);
 }

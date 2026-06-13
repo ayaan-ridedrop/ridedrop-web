@@ -18,6 +18,7 @@ import { NextResponse } from 'next/server';
 import { getStripeServer, supabaseAdmin } from '@/lib/stripe-server';
 import { emails } from '@/lib/email';
 import { logger, captureException } from '@/lib/logger';
+import { getUserEmail } from '@/lib/user-email';
 
 export async function POST(req: Request) {
   const auth = req.headers.get('authorization');
@@ -114,19 +115,20 @@ export async function POST(req: Request) {
 
       // "you've been paid" email — failures only log, never block the batch
       try {
-        const [{ data: job }, { data: carrier }] = await Promise.all([
+        const [{ data: job }, { data: carrier }, carrierEmail] = await Promise.all([
           db
             .from('bookings')
             .select('job_id, jobs!inner(from_station, to_station)')
             .eq('id', b.id)
             .single()
             .then((r: any) => ({ data: r.data?.jobs ?? null })),
-          db.from('profiles').select('email, first_name').eq('id', b.carrier_id).single(),
+          db.from('profiles').select('first_name').eq('id', b.carrier_id).single(),
+          getUserEmail(b.carrier_id), // email lives in auth.users, not profiles
         ]);
-        if (carrier?.email) {
+        if (carrierEmail) {
           await emails.payoutSent({
-            to: carrier.email,
-            carrierName: carrier.first_name ?? 'there',
+            to: carrierEmail,
+            carrierName: carrier?.first_name ?? 'there',
             route: job ? `${job.from_station} → ${job.to_station}` : 'your RideDrop delivery',
             amountGbp: amount / 100,
           });
