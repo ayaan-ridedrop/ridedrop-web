@@ -2,8 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Fonts are loaded via <link rel="preconnect"> + stylesheet in layout.tsx
-   (faster, parallel fetch) instead of a render-blocking CSS @import. */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
 
 :root {
   --ink: #0D0D0D;
@@ -14,17 +13,11 @@
   --rail: #E8E4DC;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 html, body {
   background: var(--cream);
   color: var(--ink);
   font-family: 'DM Sans', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3, h4 {
@@ -34,23 +27,3 @@ h1, h2, h3, h4 {
 }
 
 a { color: inherit; }
-
-/* ---- Premium micro-interactions ---- */
-@media (prefers-reduced-motion: no-preference) {
-  @keyframes rd-fade-up {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: none; }
-  }
-  /* Elegant entrance for hero / above-the-fold content. fill-mode 'both'
-     means content is hidden before and visible after, so it is never stuck
-     invisible once the animation completes. */
-  .rd-fade-up { animation: rd-fade-up 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
-  .rd-delay-1 { animation-delay: 0.06s; }
-  .rd-delay-2 { animation-delay: 0.14s; }
-  .rd-delay-3 { animation-delay: 0.22s; }
-}
-
-/* Smooth, consistent easing on interactive elements for a more refined feel. */
-a, button {
-  transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
-}

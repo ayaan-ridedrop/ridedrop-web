@@ -25,7 +25,7 @@ export default function Error({
     <main className="min-h-screen flex items-center justify-center px-6 bg-cream">
       <div className="max-w-md text-center">
         <Link href="/" className="font-display font-extrabold text-2xl block mb-8">
-          <img src="/logo-mark.png" alt="" className="inline-block h-[1.15em] w-[1.15em] rounded-[24%] mr-[0.35em] align-[-0.18em]" />RideDrop<span className="text-accent-mid">.</span>
+          RideDrop<span className="text-accent-mid">.</span>
         </Link>
         <h1 className="text-2xl mb-3">Something went wrong</h1>
         <p className="text-ink-soft mb-8">

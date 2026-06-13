@@ -15,7 +15,7 @@ export default function AppShell({
       <nav className="border-b border-rail bg-white/85 backdrop-blur sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-5 md:px-6 py-3 md:py-4 flex items-center justify-between">
           <Link href="/dashboard" className="font-display font-extrabold text-xl">
-            <img src="/logo-mark.png" alt="" className="inline-block h-[1.15em] w-[1.15em] rounded-[24%] mr-[0.35em] align-[-0.18em]" />RideDrop<span className="text-accent-mid">.</span>
+            RideDrop<span className="text-accent-mid">.</span>
           </Link>
 
           {/* Desktop-only links */}

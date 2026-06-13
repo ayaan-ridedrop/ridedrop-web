@@ -14,7 +14,7 @@ export default function LandingPage() {
       {/* NAV */}
       <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 md:px-12 py-5 bg-cream/85 backdrop-blur border-b border-black/5">
         <Link href="/" className="font-display font-extrabold text-xl">
-          <img src="/logo-mark.png" alt="" className="inline-block h-[1.15em] w-[1.15em] rounded-[24%] mr-[0.35em] align-[-0.18em]" />RideDrop<span className="text-accent-mid">.</span>
+          RideDrop<span className="text-accent-mid">.</span>
         </Link>
         <div className="hidden lg:flex items-center gap-7 text-sm text-ink-soft whitespace-nowrap">
           <a href="#how">How it works</a>
@@ -50,7 +50,7 @@ export default function LandingPage() {
           <RouteAnimation />
         </div>
 
-        <div className="relative z-10 max-w-2xl rd-fade-up">
+        <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 bg-accent-light text-accent px-3 py-1 rounded-full text-xs font-medium mb-7">
             <span className="w-1.5 h-1.5 rounded-full bg-accent-mid animate-pulse" />
             Now open across the UK
@@ -232,7 +232,7 @@ export default function LandingPage() {
       {/* FOOTER */}
       <footer className="bg-ink text-white/40 px-6 md:px-12 py-10 flex flex-wrap justify-between items-center gap-4 border-t border-white/10">
         <Link href="/" className="font-display font-extrabold text-lg text-white">
-          <img src="/logo-mark.png" alt="" className="inline-block h-[1.15em] w-[1.15em] rounded-[24%] mr-[0.35em] align-[-0.18em]" />RideDrop<span className="text-accent-mid">.</span>
+          RideDrop<span className="text-accent-mid">.</span>
         </Link>
         <p className="text-xs">
           © 2026 RideDrop Ltd · Registered in England &amp; Wales, company no.

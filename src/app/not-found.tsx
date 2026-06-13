@@ -9,7 +9,7 @@ export default function NotFound() {
     <main className="min-h-screen flex items-center justify-center px-6 bg-cream">
       <div className="max-w-md text-center">
         <Link href="/" className="font-display font-extrabold text-2xl block mb-8">
-          <img src="/logo-mark.png" alt="" className="inline-block h-[1.15em] w-[1.15em] rounded-[24%] mr-[0.35em] align-[-0.18em]" />RideDrop<span className="text-accent-mid">.</span>
+          RideDrop<span className="text-accent-mid">.</span>
         </Link>
         <p className="text-6xl font-display font-bold mb-3">404</p>
         <h1 className="text-2xl mb-3">This page took a wrong turn</h1>

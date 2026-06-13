@@ -19,7 +19,7 @@ export default function PrivacyPage() {
   return (
     <main className="max-w-3xl mx-auto px-6 py-16">
       <Link href="/" className="font-display font-extrabold text-xl block mb-10">
-        <img src="/logo-mark.png" alt="" className="inline-block h-[1.15em] w-[1.15em] rounded-[24%] mr-[0.35em] align-[-0.18em]" />RideDrop<span className="text-accent-mid">.</span>
+        RideDrop<span className="text-accent-mid">.</span>
       </Link>
       <h1 className="text-4xl mb-2">Privacy Policy</h1>
       <p className="text-sm text-ink-muted mb-8">Last updated: {UPDATED}</p>
