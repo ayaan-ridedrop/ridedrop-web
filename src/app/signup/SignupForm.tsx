@@ -113,8 +113,15 @@ export default function SignupForm() {
 
     setLoading(false);
 
-    // Redirect to verify email page
-    router.push('/auth/verify-email?email=' + encodeURIComponent(email));
+    // If "Confirm email" is OFF in Supabase, signUp returns an active session —
+    // the user is already logged in, so send them straight into the app instead
+    // of a dead-end "check your email" page. If confirmation IS required (no
+    // session), route them to verify their email.
+    if (authData?.session) {
+      router.push('/dashboard');
+    } else {
+      router.push('/auth/verify-email?email=' + encodeURIComponent(email));
+    }
     router.refresh();
   }
 
