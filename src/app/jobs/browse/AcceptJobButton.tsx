@@ -138,25 +138,25 @@ export default function AcceptJobButton({ jobId }: { jobId: string }) {
       // Don't fail the whole thing if status update fails
     }
 
-    // Get sender info for notification
+    // Get sender's first name for the notification. (No `email` here —
+    // profiles has no email column; emails live in auth.users and are
+    // resolved server-side inside sendBookingNotification.)
     const { data: senderProfile } = await supabase
       .from('profiles')
-      .select('first_name, email')
+      .select('first_name')
       .eq('id', job.sender_id)
       .single();
 
-    // Send notification to sender
-    if (senderProfile?.email) {
-      const carrierName = `${user.email?.split('@')[0]}`;
-      await sendBookingNotification(
-        booking.id,
-        senderProfile.email,
-        senderProfile.first_name || 'User',
-        carrierName,
-        `${job.from_station} → ${job.to_station}`,
-        agreedPrice
-      );
-    }
+    // Send notification to sender (server action looks up their email)
+    const carrierName = `${user.email?.split('@')[0]}`;
+    await sendBookingNotification(
+      booking.id,
+      job.sender_id,
+      senderProfile?.first_name || 'User',
+      carrierName,
+      `${job.from_station} → ${job.to_station}`,
+      agreedPrice
+    );
 
     setSubmitting(false);
     setShowModal(false);

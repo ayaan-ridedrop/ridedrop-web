@@ -280,9 +280,11 @@ create index if not exists disputes_booking_idx on public.disputes (booking_id);
 -- Default deny — every table has RLS on and explicit policies.
 -- ════════════════════════════════════════════════════════════════════
 
--- TEMP: Disabled RLS for testing signup/job creation
-alter table public.profiles disable row level security;
--- alter table public.profiles enable row level security;
+-- profiles RLS MUST stay enabled. It was briefly disabled "for testing" —
+-- with it off, anyone holding the public anon key can read/edit/delete every
+-- profile (names + phones). See migration 20260613000000_security_phase1.sql,
+-- which also revokes SELECT on the phone columns from the public read policy.
+alter table public.profiles enable row level security;
 alter table public.carrier_profiles enable row level security;
 alter table public.journeys enable row level security;
 alter table public.jobs enable row level security;
@@ -372,17 +374,17 @@ create policy "messages_participants_read" on public.messages for select using (
   )
 );
 
+-- The sender_id check MUST apply on every branch. The old version parsed as
+-- (sender_id=uid AND participant) OR (carrier is participant), so the second
+-- branch never checked sender_id — a participant could post AS the other
+-- person. See migration 20260613000000_security_phase1.sql.
 drop policy if exists "messages_participants_insert" on public.messages;
 create policy "messages_participants_insert" on public.messages for insert with check (
-  sender_id = auth.uid() and exists (
+  sender_id = auth.uid()
+  and exists (
     select 1 from public.bookings b
     where b.id = booking_id
       and (b.sender_id = auth.uid() or b.carrier_id = auth.uid())
-  )
-  or exists (
-    select 1 from public.bookings b
-    where b.id = booking_id
-      and b.carrier_id = auth.uid()
   )
 );
 
