@@ -12,9 +12,11 @@ export default async function ProfilePage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
+  // Explicit column list: the DB now blocks client reads of phone /
+  // phone_verified (PII lockdown), so select('*') would be rejected.
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id, first_name, last_name, role, home_city, avatar_url, bio, created_at, updated_at')
     .eq('id', user.id)
     .maybeSingle();
 

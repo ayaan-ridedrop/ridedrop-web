@@ -15,14 +15,26 @@
 // double-pay; the DB update is guarded on funds_released_at still null.
 
 import { NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { getStripeServer, supabaseAdmin } from '@/lib/stripe-server';
 import { emails } from '@/lib/email';
 import { logger, captureException } from '@/lib/logger';
 import { getUserEmail } from '@/lib/user-email';
 
+// Constant-time comparison so response timing can't be used to guess the
+// secret byte-by-byte.
+function cronAuthorized(header: string | null, secret: string): boolean {
+  const expected = Buffer.from(`Bearer ${secret}`);
+  const got = Buffer.from(header ?? '');
+  return expected.length === got.length && timingSafeEqual(expected, got);
+}
+
 export async function POST(req: Request) {
-  const auth = req.headers.get('authorization');
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Fail closed: if the secret isn't configured, never accept the request
+  // (otherwise the comparison would be against the literal "Bearer undefined").
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return new Response('Misconfigured', { status: 500 });
+  if (!cronAuthorized(req.headers.get('authorization'), secret)) {
     return new Response('Unauthorized', { status: 401 });
   }
 

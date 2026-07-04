@@ -1,10 +1,21 @@
 import { createClient } from '@/lib/supabase/server';
 import { captureException } from '@/lib/logger';
+import { timingSafeEqual } from 'crypto';
+
+// Constant-time comparison so response timing can't be used to guess the
+// secret byte-by-byte.
+function cronAuthorized(header: string | null, secret: string): boolean {
+  const expected = Buffer.from(`Bearer ${secret}`);
+  const got = Buffer.from(header ?? '');
+  return expected.length === got.length && timingSafeEqual(expected, got);
+}
 
 export async function POST(req: Request) {
-  // Verify it's from Netlify Cron or internal call
-  const auth = req.headers.get('authorization');
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Verify it's from Netlify Cron or internal call. Fail closed if the secret
+  // isn't configured (otherwise we'd compare against "Bearer undefined").
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return new Response('Misconfigured', { status: 500 });
+  if (!cronAuthorized(req.headers.get('authorization'), secret)) {
     return new Response('Unauthorized', { status: 401 });
   }
 
