@@ -295,9 +295,14 @@ alter table public.reviews enable row level security;
 alter table public.disputes enable row level security;
 alter table public.waitlist enable row level security;
 
--- profiles: anyone signed in can read (we hide sensitive fields client-side), only self can write
+-- profiles: only SIGNED-IN users can read (browse pages are behind auth, so
+-- logged-out users never need profile data — this blocks anon scraping of
+-- names + phones via the public key). Only self can write.
+-- NOTE: this still lets any logged-in user read every profile row incl. phone.
+-- Hiding phone from OTHER logged-in users needs a code change (read own phone
+-- via the service role, then revoke the phone column) — tracked as a follow-up.
 drop policy if exists "profiles_read" on public.profiles;
-create policy "profiles_read" on public.profiles for select using (true);
+create policy "profiles_read" on public.profiles for select to authenticated using (true);
 
 drop policy if exists "profiles_self_insert" on public.profiles;
 create policy "profiles_self_insert" on public.profiles for insert with check (auth.uid() = id);
@@ -305,9 +310,13 @@ create policy "profiles_self_insert" on public.profiles for insert with check (a
 drop policy if exists "profiles_self_update" on public.profiles;
 create policy "profiles_self_update" on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
 
--- carrier_profiles: public read of verification status, self write
+-- carrier_profiles: OWNER-ONLY read. Server/admin code uses the service role
+-- (bypasses RLS); public rating/verification badges are served by the
+-- postgres-owned user_trust view (also bypasses RLS). This stops the leak of
+-- Stripe account IDs, identity-session IDs, earnings and payout flags to other
+-- users. Self write only.
 drop policy if exists "carrier_profiles_read" on public.carrier_profiles;
-create policy "carrier_profiles_read" on public.carrier_profiles for select using (true);
+create policy "carrier_profiles_read" on public.carrier_profiles for select using (id = auth.uid());
 
 drop policy if exists "carrier_profiles_self_upsert" on public.carrier_profiles;
 create policy "carrier_profiles_self_upsert" on public.carrier_profiles for insert with check (auth.uid() = id);
