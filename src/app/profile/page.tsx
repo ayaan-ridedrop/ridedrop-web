@@ -67,7 +67,6 @@ export default async function ProfilePage() {
         email={user.email!}
         firstName={profile?.first_name ?? ''}
         lastName={profile?.last_name ?? ''}
-        phone={profile?.phone ?? ''}
         homeCity={profile?.home_city ?? ''}
         role={profile?.role ?? 'sender'}
         idStatus={carrierProfile?.id_verification_status ?? 'unverified'}

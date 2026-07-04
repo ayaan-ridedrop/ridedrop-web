@@ -38,8 +38,10 @@ export default async function BookingDetailPage({
   const [{ data: job }, { data: journey }, { data: sender }, { data: carrier }] = await Promise.all([
     supabase.from('jobs').select('*').eq('id', booking.job_id).single(),
     supabase.from('journeys').select('*').eq('id', booking.journey_id).single(),
-    supabase.from('profiles').select('*').eq('id', booking.sender_id).single(),
-    supabase.from('profiles').select('*').eq('id', booking.carrier_id).single(),
+    // Only the fields this page needs — never phone. The counterparty's phone
+    // must not be exposed; the app coordinates via in-app chat, not numbers.
+    supabase.from('profiles').select('id, first_name, last_name, avatar_url').eq('id', booking.sender_id).single(),
+    supabase.from('profiles').select('id, first_name, last_name, avatar_url').eq('id', booking.carrier_id).single(),
   ]);
 
   const youAreSender = booking.sender_id === user.id;

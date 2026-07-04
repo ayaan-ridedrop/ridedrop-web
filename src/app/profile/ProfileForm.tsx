@@ -11,7 +11,6 @@ export default function ProfileForm({
   email,
   firstName,
   lastName,
-  phone,
   homeCity,
   role,
   idStatus,
@@ -20,7 +19,6 @@ export default function ProfileForm({
   email: string;
   firstName: string;
   lastName: string;
-  phone: string;
   homeCity: string;
   role: UserRole;
   idStatus: IdVerificationStatus;
@@ -72,7 +70,6 @@ export default function ProfileForm({
       .update({
         first_name: String(fd.get('first_name') ?? ''),
         last_name: String(fd.get('last_name') ?? ''),
-        phone: String(fd.get('phone') ?? '') || null,
         home_city: String(fd.get('home_city') ?? '') || null,
         role: currentRole,
       })
@@ -121,14 +118,6 @@ export default function ProfileForm({
           />
         </Field>
       </div>
-      <Field label="Phone">
-        <input
-          name="phone"
-          defaultValue={phone}
-          placeholder="+44 7700 900000"
-          className="w-full border border-rail rounded-xl px-4 py-3 outline-none focus:border-accent-mid"
-        />
-      </Field>
       <Field label="Home city">
         <input
           name="home_city"
