@@ -30,3 +30,12 @@ X-Frame-Options = "DENY"
 X-Content-Type-Options = "nosniff"
 Referrer-Policy = "strict-origin-when-cross-origin"
 Permissions-Policy = "geolocation=(self), camera=(), microphone=()"
+# Content-Security-Policy. Allowlists exactly the external origins this app
+# uses: Stripe (payment Elements iframe + API) and Supabase (DB/auth/storage).
+# 'unsafe-inline' on script-src is required for Next.js hydration and the
+# JSON-LD block in layout.tsx; 'unsafe-inline' on style-src for Tailwind's
+# injected styles. frame-ancestors 'none' duplicates X-Frame-Options for
+# browsers that prefer CSP. If anything renders blank after deploy, check the
+# browser console for a CSP violation and add the blocked origin here (or
+# temporarily rename this key to Content-Security-Policy-Report-Only).
+Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://api.stripe.com; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
