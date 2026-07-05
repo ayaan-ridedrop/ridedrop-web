@@ -50,7 +50,9 @@ export async function uploadAvatar(formData: FormData) {
 
   if (uploadErr) return { error: `Upload failed: ${uploadErr.message}` };
 
-  const avatarPath = `avatars/${fileName}`;
+  // Store the bucket-relative object path. The bucket is private, so views
+  // render it through a short-lived signed URL (see src/lib/avatar.ts).
+  const avatarPath = fileName;
   const { error: updateErr } = await supabase
     .from('profiles')
     .update({ avatar_url: avatarPath })

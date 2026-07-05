@@ -95,19 +95,29 @@ export default function SignupForm() {
       return;
     }
 
-    // Upload photo to Supabase Storage (optional for now)
+    // Upload photo to the private avatars bucket (optional). Path is
+    // <userId>/<ts>.jpg so the owner-scoped storage policy accepts it, and we
+    // link it to the profile so it actually shows (the old code uploaded to a
+    // different bucket and never set avatar_url, so photos never appeared).
     if (photoFile) {
-      const fileName = `${userId}-${Date.now()}.jpg`;
+      const fileName = `${userId}/${Date.now()}.jpg`;
       const { error: uploadErr } = await supabase.storage
-        .from('profile-photos')
+        .from('avatars')
         .upload(fileName, photoFile, {
           cacheControl: '3600',
-          upsert: false,
+          upsert: true,
         });
 
       if (uploadErr) {
         console.warn('[photo upload] warning:', uploadErr);
         // Don't fail - photo is optional for now
+      } else {
+        // Link the uploaded object to the profile (bucket-relative path).
+        const { error: linkErr } = await supabase
+          .from('profiles')
+          .update({ avatar_url: fileName })
+          .eq('id', userId);
+        if (linkErr) console.warn('[photo link] warning:', linkErr);
       }
     }
 

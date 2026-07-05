@@ -9,6 +9,7 @@ import DisputeButton from '@/components/DisputeButton';
 import ConfirmDeliveryButton from './ConfirmDeliveryButton';
 import PaymentForm from '@/components/PaymentForm';
 import LiveTrainTracking from '@/components/LiveTrainTracking';
+import { signAvatar } from '@/lib/avatar';
 
 export default async function BookingDetailPage({
   params,
@@ -51,6 +52,9 @@ export default async function BookingDetailPage({
   const other = youAreSender ? carrier : sender;
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
   const otherName = capitalize(`${other?.first_name ?? ''} ${other?.last_name?.[0] ?? ''}.`.trim());
+  // Private avatar → short-lived signed URL. Resolves only because we share
+  // this booking; the identity block below is already gated to accepted+.
+  const otherAvatar = await signAvatar(supabase, other?.avatar_url);
 
   // Fetch existing chat messages.
   const { data: messages } = await supabase
@@ -146,8 +150,8 @@ export default async function BookingDetailPage({
             🔒 Verify identity before handoff
           </h3>
           <div className="flex items-center gap-4">
-            {other?.avatar_url ? (
-              <img src={other.avatar_url} alt={otherName} className="w-24 h-24 rounded-full object-cover border-2 border-blue-300" />
+            {otherAvatar ? (
+              <img src={otherAvatar} alt={otherName} className="w-24 h-24 rounded-full object-cover border-2 border-blue-300" />
             ) : (
               <div className="w-24 h-24 rounded-full bg-blue-200 flex items-center justify-center text-blue-900 font-bold text-2xl">
                 ?

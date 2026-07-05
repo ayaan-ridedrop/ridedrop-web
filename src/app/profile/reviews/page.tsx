@@ -118,13 +118,12 @@ export default async function ReviewsPage() {
                   <div key={review.id} className="bg-white border border-rail rounded-2xl p-6">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        {reviewer?.avatar_url && (
-                          <img
-                            src={reviewer.avatar_url}
-                            alt={reviewer?.first_name}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                        )}
+                        {/* Reviewer photos are private (only their booking
+                            counterparties may see them), so reviews show
+                            initials rather than the photo. */}
+                        <div className="w-10 h-10 rounded-full bg-rail flex items-center justify-center text-ink-muted font-bold flex-shrink-0">
+                          {reviewer?.first_name?.[0] || '?'}
+                        </div>
                         <div>
                           <div className="font-medium">
                             {reviewer?.first_name || 'Anonymous'}

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import AppShell from '@/components/AppShell';
+import { signAvatars } from '@/lib/avatar';
 
 type Conversation = {
   bookingId: string;
@@ -59,8 +60,11 @@ export default async function MessagesPage() {
     .select('id, first_name, last_name, avatar_url')
     .in('id', Array.from(otherUserIds));
 
+  // Avatars are private; you share a booking with each of these users, so
+  // signed URLs resolve. Any that don't fall back to initials in the view.
+  const signedProfiles = await signAvatars(supabase, otherProfiles || []);
   const profileMap = Object.fromEntries(
-    (otherProfiles || []).map((p: any) => [p.id, p])
+    signedProfiles.map((p: any) => [p.id, p])
   );
 
   // Get latest message for each booking

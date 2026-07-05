@@ -66,13 +66,11 @@ export default function BidsList({
             {/* Carrier + trust tier row */}
             <div className="flex items-center justify-between gap-3 mb-3">
               <div className="flex items-center gap-3">
-                {carrier.avatar_url ? (
-                  <img src={carrier.avatar_url} alt={carrier.first_name} className="w-12 h-12 rounded-full object-cover" />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-rail flex items-center justify-center text-ink-muted font-bold">
-                    {carrier.first_name[0]}
-                  </div>
-                )}
+                {/* Carrier photos stay private until the sender accepts a bid,
+                    so during bidding we show initials only, never the photo. */}
+                <div className="w-12 h-12 rounded-full bg-rail flex items-center justify-center text-ink-muted font-bold">
+                  {carrier.first_name[0]}
+                </div>
                 <div>
                   <div className="font-medium text-sm">
                     {carrier.first_name} {carrier.last_name}

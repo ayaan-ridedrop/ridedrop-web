@@ -6,6 +6,7 @@ import AppShell from '@/components/AppShell';
 import ProfileForm from './ProfileForm';
 import { getTrustTier } from '@/lib/get-trust-tier';
 import { TrustBadgeLarge } from '@/components/TrustBadge';
+import { signAvatar } from '@/lib/avatar';
 
 export default async function ProfilePage() {
   const supabase  = createClient() as any;
@@ -72,7 +73,7 @@ export default async function ProfilePage() {
         homeCity={profile?.home_city ?? ''}
         role={profile?.role ?? 'sender'}
         idStatus={carrierProfile?.id_verification_status ?? 'unverified'}
-        avatarUrl={profile?.avatar_url ?? null}
+        avatarUrl={await signAvatar(supabase, profile?.avatar_url)}
       />
     </AppShell>
   );
