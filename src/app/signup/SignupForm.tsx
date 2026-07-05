@@ -66,6 +66,25 @@ export default function SignupForm() {
       return;
     }
 
+    // Profile photo is required — your counterparty uses it to recognise you
+    // at the station. (This is a recognition photo, not identity verification.)
+    if (!photoFile) {
+      setError('Please add a profile photo so your sender or carrier can recognise you at the station.');
+      setLoading(false);
+      return;
+    }
+    const allowedPhotoTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+    if (photoFile.type && !allowedPhotoTypes.includes(photoFile.type)) {
+      setError('Profile photo must be a JPEG, PNG or WebP image.');
+      setLoading(false);
+      return;
+    }
+    if (photoFile.size > 5 * 1024 * 1024) {
+      setError('Profile photo must be 5 MB or smaller.');
+      setLoading(false);
+      return;
+    }
+
     const supabase = createClient() as any;
 
     // Sign up with Supabase
@@ -209,9 +228,9 @@ export default function SignupForm() {
 
       <div className="space-y-2">
         <label className="block text-sm font-medium text-ink">
-          Profile photo <span className="text-xs font-normal text-ink-muted">(Optional)</span>
+          Profile photo <span className="text-xs font-normal text-red-500">(required)</span>
         </label>
-        <p className="text-xs text-ink-muted mb-2">Upload a clear photo of your face for verification (optional for now)</p>
+        <p className="text-xs text-ink-muted mb-2">Upload a clear photo of your face. Your sender or carrier sees it only after a job is accepted, so you can recognise each other at the station.</p>
         <input
           ref={fileInputRef}
           type="file"
