@@ -46,10 +46,20 @@ export default function SignupForm() {
     const confirmPassword = String(fd.get('confirmPassword'));
     const firstName = String(fd.get('firstName')).trim();
     const lastName = String(fd.get('lastName')).trim();
+    const phone = String(fd.get('phone')).trim();
 
     // Basic validation
-    if (!email || !password || !confirmPassword || !firstName || !lastName) {
+    if (!email || !password || !confirmPassword || !firstName || !lastName || !phone) {
       setError('Please fill in all fields.');
+      setLoading(false);
+      return;
+    }
+
+    // Phone is required. Accept a reasonable range of digits (handles UK
+    // mobile/landline with or without country code); store what they entered.
+    const phoneDigits = phone.replace(/[^0-9]/g, '');
+    if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+      setError('Please enter a valid phone number.');
       setLoading(false);
       return;
     }
@@ -95,6 +105,7 @@ export default function SignupForm() {
         data: {
           first_name: firstName,
           last_name: lastName,
+          phone,
         },
       },
     });
@@ -199,6 +210,20 @@ export default function SignupForm() {
           disabled={loading}
           className="w-full border border-rail bg-white rounded-xl px-4 py-3 focus:border-accent-mid outline-none disabled:opacity-50 disabled:cursor-not-allowed"
         />
+      </div>
+
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-ink">Phone number</label>
+        <input
+          name="phone"
+          type="tel"
+          required
+          placeholder="07123 456789"
+          autoComplete="tel"
+          disabled={loading}
+          className="w-full border border-rail bg-white rounded-xl px-4 py-3 focus:border-accent-mid outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+        />
+        <p className="text-xs text-ink-muted">Kept private — never shown to other users. Used only for your account and support.</p>
       </div>
 
       <div className="space-y-2">
