@@ -10,9 +10,19 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { notifyDelivered } from '@/lib/actions/notify-booking-event';
+import { carrierRefusePickup } from '@/lib/actions/carrier-refuse-pickup';
 import { getFriendlyErrorMessage } from '@/lib/error-messages';
 
-type Stage = 'loading' | 'pickup' | 'delivery' | 'done' | 'blocked';
+type Stage = 'loading' | 'pickup' | 'delivery' | 'done' | 'blocked' | 'refused';
+
+// Reasons a carrier can decline a package at pickup.
+const REFUSE_REASONS = [
+  'Package is not as it was described',
+  'I suspect a prohibited or illegal item',
+  'Package is damaged, leaking or unsafe',
+  'Package is too large / heavy for what was agreed',
+  'Something else',
+] as const;
 
 export default function HandoverPage() {
   const { id: bookingId } = useParams<{ id: string }>();
@@ -26,6 +36,27 @@ export default function HandoverPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  // Refuse-and-report (pickup only)
+  const [showRefuse, setShowRefuse] = useState(false);
+  const [refuseReason, setRefuseReason] = useState<string>(REFUSE_REASONS[0]);
+  const [refuseNote, setRefuseNote] = useState('');
+  const [refuseBusy, setRefuseBusy] = useState(false);
+  const [refuseError, setRefuseError] = useState<string | null>(null);
+
+  async function submitRefusal() {
+    setRefuseBusy(true);
+    setRefuseError(null);
+    const note = refuseNote.trim();
+    const fullReason = note ? `${refuseReason} — ${note}` : refuseReason;
+    const res = await carrierRefusePickup(bookingId, fullReason);
+    setRefuseBusy(false);
+    if (res.error) {
+      setRefuseError(res.error);
+      return;
+    }
+    setStage('refused');
+  }
 
   useEffect(() => {
     (async () => {
@@ -222,6 +253,94 @@ export default function HandoverPage() {
               : stage === 'pickup'
                 ? 'Confirm pickup'
                 : 'Confirm delivery'}
+          </button>
+
+          {/* Refuse-and-report — pickup only. If the package isn't as agreed
+              or looks unsafe/prohibited, the carrier declines here instead of
+              completing a bad handover. This opens a dispute and freezes the
+              booking for RideDrop to review. */}
+          {stage === 'pickup' && !showRefuse && (
+            <button
+              onClick={() => setShowRefuse(true)}
+              disabled={busy}
+              className="w-full pt-2 text-center text-sm font-medium text-red-600 underline underline-offset-2 disabled:opacity-50"
+            >
+              Package not as described? Refuse &amp; report
+            </button>
+          )}
+
+          {stage === 'pickup' && showRefuse && (
+            <div className="space-y-3 rounded-xl border border-red-200 bg-red-50 p-4">
+              <p className="text-sm font-medium text-red-800">Refuse this package</p>
+              <p className="text-xs text-red-700">
+                Only do this if you haven&apos;t taken the parcel. RideDrop will review it and the
+                sender won&apos;t be charged for a package you didn&apos;t carry. Don&apos;t carry
+                anything you believe is prohibited or unsafe.
+              </p>
+
+              <label className="block text-xs font-medium text-red-800">Reason</label>
+              <select
+                value={refuseReason}
+                onChange={(e) => setRefuseReason(e.target.value)}
+                disabled={refuseBusy}
+                className="w-full rounded-lg border border-red-300 bg-white px-3 py-2 text-sm"
+              >
+                {REFUSE_REASONS.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+
+              <label className="block text-xs font-medium text-red-800">
+                Details (helps us review)
+              </label>
+              <textarea
+                value={refuseNote}
+                onChange={(e) => setRefuseNote(e.target.value)}
+                disabled={refuseBusy}
+                rows={3}
+                placeholder="What was wrong? e.g. sealed box, smell, different item than described…"
+                className="w-full rounded-lg border border-red-300 bg-white px-3 py-2 text-sm"
+              />
+
+              {refuseError && (
+                <p className="rounded-lg bg-red-100 p-2 text-xs text-red-800">{refuseError}</p>
+              )}
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setShowRefuse(false); setRefuseError(null); }}
+                  disabled={refuseBusy}
+                  className="flex-1 rounded-lg border border-neutral-300 bg-white py-2 text-sm font-medium disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitRefusal}
+                  disabled={refuseBusy}
+                  className="flex-1 rounded-lg bg-red-600 py-2 text-sm font-medium text-white disabled:opacity-50"
+                >
+                  {refuseBusy ? 'Reporting…' : 'Refuse & report'}
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {stage === 'refused' && (
+        <section className="mt-6 space-y-4 text-center">
+          <div className="text-5xl">🚫</div>
+          <h2 className="text-xl font-semibold">Package refused</h2>
+          <p className="text-sm text-neutral-600">
+            Thanks for reporting it. RideDrop will review and sort out the sender&apos;s refund —
+            you don&apos;t need to do anything else, and you won&apos;t be penalised for declining a
+            package that wasn&apos;t as agreed.
+          </p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="w-full rounded-lg bg-neutral-900 py-3 font-medium text-white"
+          >
+            Back to dashboard
           </button>
         </section>
       )}
